@@ -1,599 +1,830 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deep Dive Ski Tracker & Calculator</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Chart.js CDN for visual summaries -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Epic Ski Day Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Chart.js for smooth data visualization rendering -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0d1b2a;
+    --navy-mid: #1a2e45;
+    --navy-card: #162236;
+    --navy-border: #243650;
+    --ice: #a8d8ea;
+    --ice-dim: #5b9ab5;
+    --ice-bright: #d4eef8;
+    --snow: #e8f4f8;
+    --snow-dim: #b8d4e0;
+    --gold: #e8c96a;
+    --gold-dim: #c4a040;
+    --red: #e86a5a;
+    --green: #7ec89a;
+    --text-primary: #e8f4f8;
+    --text-secondary: #8fafc4;
+    --text-muted: #4d7a96;
+    --chip-bg: #1e3347;
+    --chip-border: #2d4d6a;
+    --tag-lift: #1a3a5c;
+    --tag-traverse: #2a1a3a;
+    --tag-run: #0f2a1a;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    background: var(--navy-mid);
+    border-bottom: 1px solid var(--navy-border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ice-bright);
+    letter-spacing: -0.3px;
+  }
+
+  .header-left .subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .resort-selector select {
+    background: var(--chip-bg);
+    border: 1px solid var(--navy-border);
+    color: var(--ice);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.15s;
+  }
+
+  .resort-selector select:focus {
+    border-color: var(--ice-dim);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    height: calc(100vh - 75px);
+  }
+
+  .sidebar {
+    background: var(--navy-card);
+    border-right: 1px solid var(--navy-border);
+    padding: 24px 20px;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 12px;
+  }
+
+  .zone-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ice-dim);
+    margin: 16px 0 6px 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(82, 138, 163, 0.15);
+    padding-bottom: 2px;
+  }
+
+  .component-group {
+    margin-bottom: 24px;
+  }
+
+  .component-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .type-pill {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .type-lift { background: var(--tag-lift); color: var(--ice); border: 1px solid #2a5080; }
+  .type-traverse { background: var(--tag-traverse); color: #c4a0e8; border: 1px solid #3a2a5a; }
+  .type-run { background: var(--tag-run); color: var(--green); border: 1px solid #1a4a2a; }
+
+  .component-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .component-btn {
+    width: 100%;
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: left;
+  }
+
+  .component-btn:hover {
+    background: #243d57;
+    border-color: var(--ice-dim);
+  }
+
+  .component-btn .name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .component-btn .meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    gap: 8px;
+  }
+
+  .component-btn .add-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--chip-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: var(--ice-dim);
+    flex-shrink: 0;
+    margin-left: 8px;
+    line-height: 1;
+  }
+
+  .component-btn:hover .add-icon {
+    background: var(--ice-dim);
+    color: var(--navy);
+    border-color: var(--ice-dim);
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    padding: 24px 28px;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--navy-card);
+    border: 1px solid var(--navy-border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .stat-card .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .stat-card .stat-value {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .stat-card .stat-unit {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+  }
+
+  .stat-total .stat-value { color: var(--ice-bright); }
+  .stat-skiing .stat-value { color: var(--green); }
+  .stat-vert .stat-value { color: var(--gold); }
+  .stat-dist .stat-value { color: var(--ice-dim); }
+
+  .dashboard-mid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .visualization-card {
+    background: var(--navy-card);
+    border: 1px solid var(--navy-border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chart-wrapper {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin-bottom: 16px;
+  }
+
+  .sequence-area {
+    flex: 1;
+  }
+
+  .sequence-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .clear-btn {
+    background: transparent;
+    border: 1px solid var(--navy-border);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .clear-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .sequence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-height: 120px;
+  }
+
+  .seq-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .seq-num {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    min-width: 20px;
+  }
+
+  .seq-type-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .seq-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .seq-meta {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 10px;
+  }
+
+  .remove-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .remove-btn:hover { color: var(--red); background: rgba(232,106,90,0.12); }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
+    border: 1px dashed var(--navy-border);
+    border-radius: 12px;
+  }
+
+  .empty-state .empty-icon { font-size: 32px; margin-bottom: 10px; }
+
+  /* Custom Scrollbar Styles */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--navy); }
+  ::-webkit-scrollbar-thumb { background: var(--navy-border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ice-dim); }
+
+  @media (max-width: 950px) {
+    .layout { grid-template-columns: 1fr; height: auto; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-mid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 antialiased">
+<body>
 
-    <!-- Top Navigation Header -->
-    <header class="bg-slate-950 text-white shadow-md border-b border-slate-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="p-2 bg-blue-600 rounded-lg text-white font-black text-xl tracking-wider">⛷️</div>
-                <div>
-                    <h1 class="text-xl font-black tracking-tight text-white">VERTMAX</h1>
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-widest">Deep-Dive Resort Run Analyzer</p>
-                </div>
-            </div>
-            
-            <!-- Resort Selector -->
-            <div class="flex items-center space-x-3 w-full sm:w-auto">
-                <label for="resortSelect" class="text-xs font-bold uppercase text-slate-400 tracking-wider whitespace-nowrap">Select Mountain:</label>
-                <select id="resortSelect" class="w-full sm:w-64 bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:border-blue-500 transition shadow-inner cursor-pointer">
-                    <!-- Loaded dynamically via JavaScript -->
-                </select>
-            </div>
+<div class="header">
+  <div class="header-left">
+    <h1>⛷️ Ski Day Calculator</h1>
+    <div class="subtitle">Build your sequence · Track your day</div>
+  </div>
+  <div class="resort-selector">
+    <select id="resort-picker" onchange="switchResort(this.value)">
+      <option value="alta">Alta Ski Area</option>
+      <option value="snowbird">Snowbird</option>
+      <option value="snowbasin">Snowbasin</option>
+      <option value="jackson">Jackson Hole</option>
+      <option value="bachelor">Mt. Bachelor</option>
+    </select>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="section-label">Components</div>
+
+    <div class="component-group">
+      <div class="component-group-header">
+        <span class="type-pill type-lift">🚡 Lifts</span>
+      </div>
+      <div class="component-list" id="lift-list"></div>
+    </div>
+
+    <div class="component-group">
+      <div class="component-group-header">
+        <span class="type-pill type-traverse">↔ Traverses</span>
+      </div>
+      <div class="component-list" id="traverse-list"></div>
+    </div>
+
+    <div class="component-group">
+      <div class="component-group-header">
+        <span class="type-pill type-run">▼ Ski Runs</span>
+      </div>
+      <div class="component-list" id="run-list"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats-row">
+      <div class="stat-card stat-total">
+        <div class="stat-label">Total Time</div>
+        <div class="stat-value" id="total-time">0</div>
+        <div class="stat-unit">minutes</div>
+      </div>
+      <div class="stat-card stat-skiing">
+        <div class="stat-label">Skiing Time</div>
+        <div class="stat-value" id="skiing-time">0</div>
+        <div class="stat-unit">minutes active descent</div>
+      </div>
+      <div class="stat-card stat-vert">
+        <div class="stat-label">Vertical Feet</div>
+        <div class="stat-value" id="total-vert">0</div>
+        <div class="stat-unit">ft descended</div>
+      </div>
+      <div class="stat-card stat-dist">
+        <div class="stat-label">Distance</div>
+        <div class="stat-value" id="total-dist">0.0</div>
+        <div class="stat-unit">miles profile</div>
+      </div>
+    </div>
+
+    <div class="dashboard-mid">
+      <div class="visualization-card">
+        <div class="section-label" style="align-self: flex-start; margin-bottom: 16px;">Time Metrics Breakdown</div>
+        <div class="chart-wrapper">
+          <canvas id="timePieChart"></canvas>
         </div>
-    </header>
+      </div>
 
-    <!-- Main Workspace Container -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        
-        <!-- Summary Dashboard Stats Grid -->
-        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">Total Logged Runs</span>
-                <span id="statTotalRuns" class="text-3xl font-black text-slate-900 mt-2">0</span>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">Est. Vertical Drop</span>
-                <span id="statTotalVert" class="text-3xl font-black text-blue-600 mt-2">0<span class="text-sm font-medium text-slate-500 ml-1">ft</span></span>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">Est. Total Distance</span>
-                <span id="statTotalDist" class="text-3xl font-black text-emerald-600 mt-2">0.0<span class="text-sm font-medium text-slate-500 ml-1">mi</span></span>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-                <span class="text-xs font-bold tracking-wider text-slate-400 uppercase">Est. Ski Time</span>
-                <span id="statTotalTime" class="text-3xl font-black text-amber-600 mt-2">0<span class="text-sm font-medium text-slate-500 ml-1">min</span></span>
-            </div>
-        </section>
-
-        <!-- Visualization and Selection Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            
-            <!-- Left Panel: Interactive Zone Selector & Difficulty Visualizer -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between space-y-6">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900 tracking-tight mb-1">Mountain Profile</h3>
-                    <p class="text-xs text-slate-500 mb-4">Difficulty allocation by run volume</p>
-                    <div class="relative flex justify-center items-center h-52 w-full mx-auto">
-                        <canvas id="difficultyChart"></canvas>
-                    </div>
-                </div>
-                
-                <hr class="border-slate-100">
-                
-                <!-- Zone Navigation Toggles -->
-                <div>
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Filter Mountain Sector</h4>
-                    <div id="zoneFiltersContainer" class="flex flex-wrap gap-2">
-                        <!-- Loaded dynamically via JavaScript -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel: The Comprehensive Multi-Select Table Grid -->
-            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-900 tracking-tight">Run Catalogue</h3>
-                        <p class="text-xs text-slate-500">Select/deselect trails to adjust calculation variables instantly.</p>
-                    </div>
-                    <div class="flex gap-2 w-full sm:w-auto">
-                        <button id="btnSelectAll" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 transition rounded-lg text-xs font-bold text-slate-700 cursor-pointer">Select All</button>
-                        <button id="btnClearAll" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 transition rounded-lg text-xs font-bold text-slate-600 cursor-pointer">Deselect All</button>
-                    </div>
-                </div>
-
-                <!-- Scrollable Table Wrapper -->
-                <div class="overflow-y-auto max-h-[460px] custom-scrollbar flex-1">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100/70 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider sticky top-0 bg-opacity-95 backdrop-blur-sm z-10">
-                                <th class="py-3 px-4 w-12 text-center">✔</th>
-                                <th class="py-3 px-4">Run Name</th>
-                                <th class="py-3 px-4">Sector / Lift Zone</th>
-                                <th class="py-3 px-4">Difficulty</th>
-                                <th class="py-3 px-4 text-right">Vert (ft)</th>
-                                <th class="py-3 px-4 text-right">Distance (mi)</th>
-                                <th class="py-3 px-4 text-right">Est. Time</th>
-                            </tr>
-                        </thead>
-                        <tbody id="runsTableBody" class="divide-y divide-slate-100 text-sm font-medium text-slate-700">
-                            <!-- Populated dynamically via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+      <div class="sequence-area">
+        <div class="sequence-label-row">
+          <div class="section-label" style="margin-bottom:0">Your run sequence</div>
+          <button class="clear-btn" onclick="clearAll()">Clear all</button>
         </div>
-
-    </main>
-
-    <!-- Footer System -->
-    <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 mt-12">
-        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
-            <p class="font-semibold text-slate-300">VertMax Analytical System Platform</p>
-            <p>Comprehensive geographic database compiled utilizing actual resort trail designations, vertical drops, and pitch calculations.</p>
+        <div class="sequence-list" id="sequence-list">
+          <!-- Dynamic sequence item injections -->
         </div>
-    </footer>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <!-- Deep-Dive Comprehensive Master Dataset Script -->
-    <script>
-        const resortDatabase = {
-            "alta": {
-                name: "Alta Ski Area, UT",
-                runs: [
-                    // Albion / Sunnyside
-                    { name: "Crooked Mile", zone: "Albion / Sunnyside", difficulty: "Beginner", vert: 450, dist: 1.2, time: 6 },
-                    { name: "Home Run", zone: "Albion / Sunnyside", difficulty: "Beginner", vert: 550, dist: 1.5, time: 8 },
-                    { name: "Patsey Marley", zone: "Albion / Sunnyside", difficulty: "Beginner", vert: 400, dist: 1.0, time: 5 },
-                    { name: "Sunnyside", zone: "Albion / Sunnyside", difficulty: "Beginner", vert: 450, dist: 1.1, time: 5 },
-                    { name: "Sweet 'N Sour", zone: "Albion / Sunnyside", difficulty: "Beginner", vert: 350, dist: 0.8, time: 4 },
-                    { name: "Meadow", zone: "Albion / Sunnyside", difficulty: "Beginner", vert: 300, dist: 0.7, time: 3 },
-                    { name: "Dottie's Sunnyside", zone: "Albion / Sunnyside", difficulty: "Beginner", vert: 420, dist: 0.9, time: 4 },
-                    { name: "Albion Base Path", zone: "Albion / Sunnyside", difficulty: "Beginner", vert: 200, dist: 0.6, time: 3 },
-                    
-                    // Sugarloaf
-                    { name: "Devil's Elbow", zone: "Sugarloaf", difficulty: "Intermediate", vert: 1200, dist: 2.1, time: 9 },
-                    { name: "Rollercoaster", zone: "Sugarloaf", difficulty: "Intermediate", vert: 1000, dist: 1.6, time: 7 },
-                    { name: "Razor Back", zone: "Sugarloaf", difficulty: "Intermediate", vert: 950, dist: 1.4, time: 6 },
-                    { name: "Glory Hole", zone: "Sugarloaf", difficulty: "Advanced", vert: 1100, dist: 1.2, time: 5 },
-                    { name: "Sugar Bowl", zone: "Sugarloaf", difficulty: "Advanced", vert: 1150, dist: 1.3, time: 5 },
-                    { name: "Extrovert", zone: "Sugarloaf", difficulty: "Expert", vert: 905, dist: 0.9, time: 4 },
-                    { name: "Little Dipper", zone: "Sugarloaf", difficulty: "Intermediate", vert: 800, dist: 1.2, time: 5 },
-                    { name: "Devil's Castle Bowl", zone: "Sugarloaf", difficulty: "Expert", vert: 1300, dist: 1.5, time: 8 },
-                    { name: "East Baldy Traverse", zone: "Sugarloaf", difficulty: "Intermediate", vert: 300, dist: 1.4, time: 6 },
+<script>
+const RESORTS_DATABASE = {
+  alta: {
+    lifts: [
+      { id: 'collins', name: 'Collins Lift', time: 8, vert: 0, dist: 0 },
+      { id: 'supreme', name: 'Supreme Lift', time: 5.5, vert: 0, dist: 0 },
+      { id: 'sugarloaf', name: 'Sugarloaf Lift', time: 6, vert: 0, dist: 0 },
+      { id: 'wildcat', name: 'Wildcat Lift', time: 7.5, vert: 0, dist: 0 },
+      { id: 'sunnyside', name: 'Sunnyside Lift', time: 5, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'hightraverse', name: 'High Traverse Line', time: 3.5, vert: 0, dist: 0 },
+      { id: 'saddle', name: 'Saddle Traverse Cut', time: 2, vert: 0, dist: 0 },
+      { id: 'baldyhike', name: 'Baldy Peak Hike (Bootpack)', time: 25, vert: 0, dist: 0 }
+    ],
+    runs: [
+      { id: 'greeley', name: 'Greeley', time: 1.5, vert: 600, dist: 0.5, diff: 'expert', zone: 'Collins / Wildcat' },
+      { id: 'gunsight', name: 'Gunsight', time: 1.8, vert: 800, dist: 0.55, diff: 'expert', zone: 'Collins / Wildcat' },
+      { id: 'collinsface', name: 'Collins Face', time: 1.2, vert: 500, dist: 0.35, diff: 'advanced', zone: 'Collins / Wildcat' },
+      { id: 'rustler', name: "Alf's High Rustler", time: 2.2, vert: 1050, dist: 0.7, diff: 'expert', zone: 'Collins / Wildcat' },
+      { id: 'mambo', name: 'Mambo', time: 1.8, vert: 800, dist: 0.6, diff: 'intermediate', zone: 'Collins / Wildcat' },
+      { id: 'ballroom', name: 'Ballroom Bowl', time: 2.0, vert: 900, dist: 0.7, diff: 'intermediate', zone: 'Collins / Wildcat' },
+      
+      { id: 'so_long', name: 'So Long', time: 2.4, vert: 1000, dist: 0.8, diff: 'advanced', zone: 'Supreme / Sugarloaf' },
+      { id: 'devils', name: "Devil's Castle Bowl", time: 2.6, vert: 1100, dist: 0.85, diff: 'advanced', zone: 'Supreme / Sugarloaf' },
+      { id: 'rollercoaster', name: 'Rollercoaster', time: 1.7, vert: 700, dist: 0.55, diff: 'intermediate', zone: 'Supreme / Sugarloaf' },
+      { id: 'extrovert', name: 'Extrovert', time: 1.5, vert: 650, dist: 0.5, diff: 'advanced', zone: 'Supreme / Sugarloaf' },
+      
+      { id: 'crooked', name: 'Crooked Mile', time: 2.2, vert: 400, dist: 0.7, diff: 'beginner', zone: 'Albion / Sunnyside' },
+      { id: 'homerun', name: 'Home Run', time: 3.2, vert: 800, dist: 1.3, diff: 'beginner', zone: 'Albion / Sunnyside' },
+      { id: 'patsey', name: 'Patsey Marley', time: 1.8, vert: 380, dist: 0.65, diff: 'beginner', zone: 'Albion / Sunnyside' }
+    ]
+  },
+  snowbird: {
+    lifts: [
+      { id: 'tram', name: 'Aerial Tram', time: 7, vert: 0, dist: 0 },
+      { id: 'peru', name: 'Peru Express', time: 4.5, vert: 0, dist: 0 },
+      { id: 'gadzoom', name: 'Gadzoom Quad', time: 5.5, vert: 0, dist: 0 },
+      { id: 'mineral', name: 'Mineral Basin Express', time: 6, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'regulator_trav', name: 'Regulator Traverse Line', time: 1.5, vert: 0, dist: 0 },
+      { id: 'cirque_trav', name: 'Cirque Traverse Cat-Track', time: 2.5, vert: 0, dist: 0 }
+    ],
+    runs: [
+      { id: 'regulator', name: 'Regulator Johnson', time: 1.8, vert: 1300, dist: 0.9, diff: 'advanced', zone: 'Little Cloud / Top' },
+      { id: 'silver', name: 'Silver Fox', time: 2.5, vert: 1200, dist: 0.8, diff: 'expert', zone: 'Peruvian Gulch' },
+      { id: 'primrose', name: 'Primrose Path', time: 2.2, vert: 1400, dist: 1.0, diff: 'advanced', zone: 'Peruvian Gulch' },
+      { id: 'gadzooks', name: 'Gadzooks', time: 1.8, vert: 900, dist: 0.7, diff: 'intermediate', zone: 'Gad Valley' },
+      { id: 'bassackwards', name: 'Bassackwards', time: 3.2, vert: 1100, dist: 1.4, diff: 'beginner', zone: 'Gad Valley' },
+      { id: 'bookends', name: 'Bookends Bowl', time: 2.0, vert: 1200, dist: 0.85, diff: 'expert', zone: 'Mineral Basin' },
+      { id: 'lupine', name: 'Lupine Loop', time: 3.5, vert: 1400, dist: 1.6, diff: 'intermediate', zone: 'Mineral Basin' }
+    ]
+  },
+  snowbasin: {
+    lifts: [
+      { id: 'needles', name: 'Needles Gondola', time: 7.5, vert: 0, dist: 0 },
+      { id: 'johnpaul', name: 'John Paul Express', time: 5.5, vert: 0, dist: 0 },
+      { id: 'strawberry', name: 'Strawberry Gondola', time: 9, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'strawberry_trav', name: 'Strawberry Traverse', time: 2, vert: 0, dist: 0 }
+    ],
+    runs: [
+      { id: 'grizzly', name: 'Grizzly Downhill', time: 3.5, vert: 2400, dist: 1.8, diff: 'expert', zone: 'John Paul Peak Area' },
+      { id: 'wildflower', name: 'Wildflower Downhill', time: 3.0, vert: 2200, dist: 1.6, diff: 'expert', zone: 'John Paul Peak Area' },
+      { id: 'dan', name: "Dan's Run", time: 2.2, vert: 1100, dist: 0.9, diff: 'intermediate', zone: 'Needles Face' },
+      { id: 'sweetwater', name: 'Sweetwater', time: 2.4, vert: 1000, dist: 1.1, diff: 'intermediate', zone: 'Needles Face' },
+      { id: 'powder_puff', name: 'Powder Puff', time: 1.5, vert: 400, dist: 0.7, diff: 'beginner', zone: 'Needles Face' },
+      { id: 'elkridge', name: 'Elk Ridge', time: 4.5, vert: 2400, dist: 2.8, diff: 'intermediate', zone: 'Strawberry Valley' },
+      { id: 'sister', name: "Sister's Bowl", time: 2.5, vert: 1400, dist: 1.1, diff: 'advanced', zone: 'Strawberry Valley' }
+    ]
+  },
+  jackson: {
+    lifts: [
+      { id: 'tram_jh', name: 'Aerial Tram', time: 8, vert: 0, dist: 0 },
+      { id: 'sublette', name: 'Sublette Quad', time: 5, vert: 0, dist: 0 },
+      { id: 'casper', name: 'Casper High Speed', time: 4, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'casper_trav', name: 'Casper Traverse Trail', time: 1.5, vert: 0, dist: 0 }
+    ],
+    runs: [
+      { id: 'corbets', name: "Corbet's Couloir", time: 1.0, vert: 700, dist: 0.4, diff: 'expert', zone: 'Rendezvous Mountain' },
+      { id: 'rendezvousBowl', name: 'Rendezvous Bowl', time: 2.0, vert: 1600, dist: 1.1, diff: 'advanced', zone: 'Rendezvous Mountain' },
+      { id: 'alta_chutes', name: 'Alta Chutes', time: 1.5, vert: 1100, dist: 0.6, diff: 'expert', zone: 'Sublette Sector' },
+      { id: 'laramie', name: 'Laramie Bowl', time: 1.6, vert: 1200, dist: 0.8, diff: 'advanced', zone: 'Sublette Sector' },
+      { id: 'sundance', name: 'Sundance', time: 2.2, vert: 1400, dist: 1.5, diff: 'intermediate', zone: 'Casper / Mid-Mountain' },
+      { id: 'easy_does', name: 'Easy Does It', time: 2.5, vert: 600, dist: 1.2, diff: 'beginner', zone: 'Casper / Mid-Mountain' }
+    ]
+  },
+  bachelor: {
+    lifts: [
+      { id: 'summit', name: 'Summit Quad', time: 6, vert: 0, dist: 0 },
+      { id: 'pine_marten', name: 'Pine Marten Fast', time: 5, vert: 0, dist: 0 },
+      { id: 'outback', name: 'Outback Express', time: 5.5, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'catchline', name: 'Sunrise Return Catchline', time: 2, vert: 0, dist: 0 }
+    ],
+    runs: [
+      { id: 'cirque_bach', name: 'The Cirque', time: 2.0, vert: 1700, dist: 1.2, diff: 'expert', zone: 'Summit Cone' },
+      { id: 'cow_face', name: 'Cow Face', time: 1.8, vert: 1400, dist: 1.0, diff: 'advanced', zone: 'Summit Cone' },
+      { id: 'thunderbird', name: 'Thunderbird', time: 2.0, vert: 1300, dist: 1.8, diff: 'intermediate', zone: 'Front Side Peaks' },
+      { id: 'le_meadows', name: 'Le Meadows', time: 2.2, vert: 600, dist: 1.3, diff: 'beginner', zone: 'Front Side Peaks' },
+      { id: 'boomerang', name: 'Boomerang', time: 2.4, vert: 1600, dist: 2.0, diff: 'advanced', zone: 'Outback Territory' },
+      { id: 'downunder', name: 'Down Under', time: 1.8, vert: 1200, dist: 1.0, diff: 'intermediate', zone: 'Outback Territory' }
+    ]
+  }
+};
 
-                    // Supreme
-                    { name: "Rock 'N Roll", zone: "Supreme", difficulty: "Intermediate", vert: 900, dist: 1.4, time: 6 },
-                    { name: "Catherine's Area", zone: "Supreme", difficulty: "Advanced", vert: 1100, dist: 1.6, time: 8 },
-                    { name: "East Castle", zone: "Supreme", difficulty: "Expert", vert: 1400, dist: 1.8, time: 10 },
-                    { name: "Supreme Bowl", zone: "Supreme", difficulty: "Expert", vert: 1200, dist: 1.3, time: 7 },
-                    { name: "Sunset", zone: "Supreme", difficulty: "Intermediate", vert: 1050, dist: 1.7, time: 7 },
-                    { name: "Challenger", zone: "Supreme", difficulty: "Advanced", vert: 1100, dist: 1.2, time: 5 },
-                    { name: "Big Dipper", zone: "Supreme", difficulty: "Intermediate", vert: 850, dist: 1.3, time: 5 },
-                    { name: "Erosion", zone: "Supreme", difficulty: "Advanced", vert: 1000, dist: 1.1, time: 4 },
-                    { name: "So Long", zone: "Supreme", difficulty: "Advanced", vert: 1150, dist: 1.5, time: 6 },
+const DIFF_COLORS = {
+  beginner: { bg: '#0a2518', text: '#7ec89a', border: '#1a4a2a' },
+  intermediate: { bg: '#1a2c10', text: '#a8d870', border: '#2a4a1a' },
+  advanced: { bg: '#1a1a10', text: '#e8c96a', border: '#3a3010' },
+  expert: { bg: '#2a1010', text: '#e87a6a', border: '#4a2010' },
+};
 
-                    // Collins / Wildcat
-                    { name: "Ballroom Bowl", zone: "Collins / Wildcat", difficulty: "Intermediate", vert: 1300, dist: 1.8, time: 8 },
-                    { name: "Main Street", zone: "Collins / Wildcat", difficulty: "Intermediate", vert: 1500, dist: 2.2, time: 9 },
-                    { name: "High Traverse", zone: "Collins / Wildcat", difficulty: "Advanced", vert: 400, dist: 1.5, time: 7 },
-                    { name: "Alf's High Rustler", zone: "Collins / Wildcat", difficulty: "Expert", vert: 1000, dist: 0.8, time: 5 },
-                    { name: "Eagle's Nest", zone: "Collins / Wildcat", difficulty: "Expert", vert: 1200, dist: 1.1, time: 6 },
-                    { name: "Gunsight", zone: "Collins / Wildcat", difficulty: "Expert", vert: 1100, dist: 1.0, time: 5 },
-                    { name: "Stone Crusher", zone: "Collins / Wildcat", difficulty: "Expert", vert: 1050, dist: 0.9, time: 4 },
-                    { name: "Collins Face", zone: "Collins / Wildcat", difficulty: "Advanced", vert: 800, dist: 0.9, time: 4 },
-                    { name: "Mambo", zone: "Collins / Wildcat", difficulty: "Intermediate", vert: 1200, dist: 1.8, time: 7 },
-                    { name: "Nina's Curve", zone: "Collins / Wildcat", difficulty: "Advanced", vert: 1100, dist: 1.2, time: 5 },
-                    { name: "Schuss Gully", zone: "Collins / Wildcat", difficulty: "Expert", vert: 950, dist: 0.8, time: 4 },
-                    { name: "Wildcat Face", zone: "Collins / Wildcat", difficulty: "Advanced", vert: 1100, dist: 1.1, time: 5 },
-                    { name: "Punch Bowl", zone: "Collins / Wildcat", difficulty: "Advanced", vert: 850, dist: 0.9, time: 4 },
-                    { name: "Warm Springs", zone: "Collins / Wildcat", difficulty: "Intermediate", vert: 1400, dist: 2.0, time: 8 }
-                ]
-            },
-            "snowbird": {
-                name: "Snowbird, UT",
-                runs: [
-                    // Peruvian Gulch
-                    { name: "Silver Fox", zone: "Peruvian Gulch", difficulty: "Expert", vert: 1800, dist: 1.5, time: 8 },
-                    { name: "Great Scott", zone: "Peruvian Gulch", difficulty: "Expert", vert: 1000, dist: 0.6, time: 5 },
-                    { name: "Upper Chip's Run", zone: "Peruvian Gulch", difficulty: "Intermediate", vert: 1500, dist: 2.1, time: 9 },
-                    { name: "Lower Chip's Run", zone: "Peruvian Gulch", difficulty: "Intermediate", vert: 1400, dist: 2.4, time: 10 },
-                    { name: "Primrose Path", zone: "Peruvian Gulch", difficulty: "Advanced", vert: 1600, dist: 1.6, time: 7 },
-                    { name: "Dalton's Draw", zone: "Peruvian Gulch", difficulty: "Intermediate", vert: 1200, dist: 1.8, time: 7 },
-                    { name: "Adios", zone: "Peruvian Gulch", difficulty: "Advanced", vert: 1100, dist: 1.1, time: 5 },
-                    { name: "Peruvian Cirque", zone: "Peruvian Gulch", difficulty: "Expert", vert: 1400, dist: 1.3, time: 6 },
-                    { name: "Election", zone: "Peruvian Gulch", difficulty: "Advanced", vert: 1300, dist: 1.4, time: 6 },
+let currentResort = 'alta';
+let sequence = [];
+let nextId = 1;
+let chartInstance = null;
 
-                    // Gad Valley
-                    { name: "Gad Chutes", zone: "Gad Valley", difficulty: "Expert", vert: 1200, dist: 0.9, time: 5 },
-                    { name: "Tiger Tail", zone: "Gad Valley", difficulty: "Expert", vert: 1400, dist: 1.2, time: 6 },
-                    { name: "West Second South", zone: "Gad Valley", difficulty: "Beginner", vert: 500, dist: 1.3, time: 6 },
-                    { name: "Chickadee", zone: "Gad Valley", difficulty: "Beginner", vert: 150, dist: 0.3, time: 2 },
-                    { name: "Gadzooks", zone: "Gad Valley", difficulty: "Intermediate", vert: 1100, dist: 1.6, time: 7 },
-                    { name: "Ted's Bowl", zone: "Gad Valley", difficulty: "Advanced", vert: 1250, dist: 1.4, time: 6 },
-                    { name: "Organ Grinder", zone: "Gad Valley", difficulty: "Advanced", vert: 1300, dist: 1.3, time: 6 },
-                    { name: "Big Emma", zone: "Gad Valley", difficulty: "Intermediate", vert: 1000, dist: 1.9, time: 8 },
-                    { name: "Bassackwards", zone: "Gad Valley", difficulty: "Intermediate", vert: 1200, dist: 2.2, time: 9 },
-                    { name: "Miner's Road", zone: "Gad Valley", difficulty: "Beginner", vert: 400, dist: 1.1, time: 5 },
-                    { name: "Carbonate", zone: "Gad Valley", difficulty: "Intermediate", vert: 900, dist: 1.4, time: 6 },
-                    { name: "Wilbere Ridge", zone: "Gad Valley", difficulty: "Advanced", vert: 850, dist: 1.0, time: 4 },
+function formatTime(mins) {
+  if (mins < 60) return Math.round(mins * 10) / 10;
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
 
-                    // Mineral Basin
-                    { name: "Lupine Loop", zone: "Mineral Basin", difficulty: "Intermediate", vert: 1400, dist: 2.5, time: 10 },
-                    { name: "Powder Paradise", zone: "Mineral Basin", difficulty: "Advanced", vert: 1300, dist: 1.8, time: 7 },
-                    { name: "Path to Paradise", zone: "Mineral Basin", difficulty: "Intermediate", vert: 300, dist: 1.5, time: 6 },
-                    { name: "Bookends Bowl", zone: "Mineral Basin", difficulty: "Expert", vert: 1200, dist: 1.4, time: 7 },
-                    { name: "White Room", zone: "Mineral Basin", difficulty: "Expert", vert: 1100, dist: 1.1, time: 5 },
-                    { name: "Shireen", zone: "Mineral Basin", difficulty: "Advanced", vert: 1250, dist: 1.5, time: 6 },
-                    { name: "Malu Fork", zone: "Mineral Basin", difficulty: "Advanced", vert: 1050, dist: 1.3, time: 5 },
-                    { name: "Sweet 16", zone: "Mineral Basin", difficulty: "Intermediate", vert: 900, dist: 1.6, time: 6 },
+function switchResort(resortKey) {
+  currentResort = resortKey;
+  sequence = [];
+  renderSidebar();
+  renderSequence();
+  updateStats();
+}
 
-                    // Little Cloud
-                    { name: "Regulator Johnson", zone: "Little Cloud", difficulty: "Advanced", vert: 1300, dist: 1.4, time: 5 },
-                    { name: "Road to Provo", zone: "Little Cloud", difficulty: "Advanced", vert: 400, dist: 1.8, time: 7 },
-                    { name: "Mark Malu", zone: "Little Cloud", difficulty: "Advanced", vert: 1200, dist: 1.3, time: 5 },
-                    { name: "Fields of Glory", zone: "Little Cloud", difficulty: "Expert", vert: 1400, dist: 1.5, time: 7 },
-                    { name: "Cirque Traverse", zone: "Little Cloud", difficulty: "Expert", vert: 200, dist: 1.2, time: 5 }
-                ]
-            },
-            "snowbasin": {
-                name: "Snowbasin, UT",
-                runs: [
-                    // Needles
-                    { name: "Dan's Run", zone: "Needles", difficulty: "Intermediate", vert: 1400, dist: 2.0, time: 8 },
-                    { name: "Pork Barrel", zone: "Needles", difficulty: "Advanced", vert: 1200, dist: 1.4, time: 5 },
-                    { name: "City Hill", zone: "Needles", difficulty: "Intermediate", vert: 1100, dist: 1.6, time: 6 },
-                    { name: "Needles Cirque", zone: "Needles", difficulty: "Expert", vert: 1600, dist: 1.5, time: 7 },
-                    { name: "Sweetwater", zone: "Needles", difficulty: "Intermediate", vert: 1300, dist: 1.9, time: 7 },
-                    { name: "Bear Springs", zone: "Needles", difficulty: "Intermediate", vert: 1000, dist: 1.5, time: 6 },
-                    { name: "Snowshoe", zone: "Needles", difficulty: "Beginner", vert: 600, dist: 1.4, time: 6 },
-                    { name: "Strawberry Traverse", zone: "Needles", difficulty: "Intermediate", vert: 400, dist: 1.8, time: 7 },
-                    { name: "Hollywood", zone: "Needles", difficulty: "Advanced", vert: 1250, dist: 1.3, time: 5 },
+function renderSidebar() {
+  const data = RESORTS_DATABASE[currentResort];
+  
+  // Render Lifts Menu
+  document.getElementById('lift-list').innerHTML = data.lifts.map(l => `
+    <button class="component-btn" onclick="addItem('lifts','${l.id}')">
+      <div>
+        <div class="name">${l.name}</div>
+        <div class="meta"><span>${l.time} min</span></div>
+      </div>
+      <div class="add-icon">+</div>
+    </button>
+  `).join('');
 
-                    // Strawberry
-                    { name: "Elk Ridge", zone: "Strawberry", difficulty: "Intermediate", vert: 2400, dist: 3.5, time: 14 },
-                    { name: "Sister's Bowl", zone: "Strawberry", difficulty: "Expert", vert: 1800, dist: 2.0, time: 9 },
-                    { name: "Middle Bowl Cirque", zone: "Strawberry", difficulty: "Expert", vert: 1700, dist: 1.8, time: 8 },
-                    { name: "Lone Tree", zone: "Strawberry", difficulty: "Expert", vert: 1500, dist: 1.4, time: 7 },
-                    { name: "DeMoisy Bumps", zone: "Strawberry", difficulty: "Advanced", vert: 1300, dist: 1.5, time: 6 },
-                    { name: "Main Street", zone: "Strawberry", difficulty: "Intermediate", vert: 1600, dist: 2.3, time: 9 },
-                    { name: "Moonshine", zone: "Strawberry", difficulty: "Advanced", vert: 1400, dist: 1.6, time: 6 },
-                    { name: "Gordon's", zone: "Strawberry", difficulty: "Intermediate", vert: 1200, dist: 1.9, time: 7 },
+  // Render Traverses Menu
+  document.getElementById('traverse-list').innerHTML = data.traverses.map(t => `
+    <button class="component-btn" onclick="addItem('traverses','${t.id}')">
+      <div>
+        <div class="name">${t.name}</div>
+        <div class="meta"><span>${t.time} min</span></div>
+      </div>
+      <div class="add-icon">+</div>
+    </button>
+  `).join('');
 
-                    // John Paul
-                    { name: "Grizzly Downhill", zone: "John Paul", difficulty: "Expert", vert: 2900, dist: 2.4, time: 10 },
-                    { name: "Wildflower Downhill", zone: "John Paul", difficulty: "Advanced", vert: 2400, dist: 2.2, time: 9 },
-                    { name: "Wildcat Bowl", zone: "John Paul", difficulty: "Advanced", vert: 1500, dist: 1.6, time: 6 },
-                    { name: "Allen Peak Tram Run", zone: "John Paul", difficulty: "Expert", vert: 800, dist: 0.7, time: 4 },
-                    { name: "No Name Face", zone: "John Paul", difficulty: "Expert", vert: 1800, dist: 1.8, time: 8 },
-                    { name: "Ellison's", zone: "John Paul", difficulty: "Advanced", vert: 1400, dist: 1.5, time: 6 },
-                    { name: "Mt. Ogden Bowl Road", zone: "John Paul", difficulty: "Intermediate", vert: 1100, dist: 2.5, time: 10 },
+  // Render Runs Partitioned Into Explicit Mountain Sectors
+  const zonesMap = {};
+  data.runs.forEach(r => {
+    if (!zonesMap[r.zone]) zonesMap[r.zone] = [];
+    zonesMap[r.zone].push(r);
+  });
 
-                    // Littlecat / Becker
-                    { name: "Powder Puff", zone: "Littlecat / Becker", difficulty: "Beginner", vert: 300, dist: 0.8, time: 4 },
-                    { name: "Blue Grouse", zone: "Littlecat / Becker", difficulty: "Intermediate", vert: 800, dist: 1.3, time: 5 },
-                    { name: "Becker Face", zone: "Littlecat / Becker", difficulty: "Intermediate", vert: 750, dist: 1.1, time: 4 },
-                    { name: "Centennial", zone: "Littlecat / Becker", difficulty: "Intermediate", vert: 900, dist: 1.4, time: 5 }
-                ]
-            },
-            "jackson_hole": {
-                name: "Jackson Hole Mountain Resort, WY",
-                runs: [
-                    // Rendezvous Mountain
-                    { name: "Corbet's Couloir", zone: "Rendezvous Mountain", difficulty: "Expert", vert: 800, dist: 0.5, time: 4 },
-                    { name: "Rendezvous Trail", zone: "Rendezvous Mountain", difficulty: "Intermediate", vert: 4139, dist: 4.5, time: 18 },
-                    { name: "High Cheat", zone: "Rendezvous Mountain", difficulty: "Advanced", vert: 1600, dist: 1.5, time: 6 },
-                    { name: "Bivouac", zone: "Rendezvous Mountain", difficulty: "Advanced", vert: 1500, dist: 1.4, time: 6 },
-                    { name: "Rendezvous Bowl", zone: "Rendezvous Mountain", difficulty: "Advanced", vert: 1300, dist: 1.3, time: 5 },
-                    { name: "Sublette Ridge", zone: "Rendezvous Mountain", difficulty: "Expert", vert: 1800, dist: 1.6, time: 8 },
-                    { name: "Cheyenne Bowl", zone: "Rendezvous Mountain", difficulty: "Advanced", vert: 1400, dist: 1.4, time: 6 },
-                    { name: "Laramie Bowl", zone: "Rendezvous Mountain", difficulty: "Advanced", vert: 1200, dist: 1.2, time: 5 },
-                    { name: "Tensleep Bowl", zone: "Rendezvous Mountain", difficulty: "Advanced", vert: 1100, dist: 1.3, time: 5 },
-                    { name: "Alta Chute 3", zone: "Rendezvous Mountain", difficulty: "Expert", vert: 1200, dist: 0.9, time: 5 },
-                    { name: "Tower Three Chute", zone: "Rendezvous Mountain", difficulty: "Expert", vert: 1150, dist: 0.8, time: 4 },
+  let runHtml = '';
+  for (const zone in zonesMap) {
+    runHtml += `<div class="zone-title">${zone}</div>`;
+    runHtml += zonesMap[zone].map(r => {
+      const dc = DIFF_COLORS[r.diff] || DIFF_COLORS.intermediate;
+      return `
+        <button class="component-btn" onclick="addItem('runs','${r.id}')">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+              <span class="name">${r.name}</span>
+              <span style="font-size:9px;padding:2px 6px;border-radius:6px;background:${dc.bg};color:${dc.text};border:1px solid ${dc.border};text-transform:uppercase;letter-spacing:0.5px">${r.diff}</span>
+            </div>
+            <div class="meta">
+              <span>${r.time} min</span>
+              <span>${r.vert.toLocaleString()} ft</span>
+              <span>${r.dist} mi</span>
+            </div>
+          </div>
+          <div class="add-icon">+</div>
+        </button>
+      `;
+    }).join('');
+  }
+  document.getElementById('run-list').innerHTML = runHtml;
+}
 
-                    // Casper / Mid-Mountain
-                    { name: "Casper Traverse", zone: "Casper / Mid-Mountain", difficulty: "Intermediate", vert: 300, dist: 1.2, time: 4 },
-                    { name: "Amphitheater", zone: "Casper / Mid-Mountain", difficulty: "Intermediate", vert: 1100, dist: 1.6, time: 6 },
-                    { name: "Sundance", zone: "Casper / Mid-Mountain", difficulty: "Intermediate", vert: 1400, dist: 2.1, time: 8 },
-                    { name: "Werner", zone: "Casper / Mid-Mountain", difficulty: "Intermediate", vert: 1200, dist: 1.8, time: 7 },
-                    { name: "Easy Way", zone: "Casper / Mid-Mountain", difficulty: "Beginner", vert: 500, dist: 1.4, time: 6 },
-                    { name: "Campground", zone: "Casper / Mid-Mountain", difficulty: "Intermediate", vert: 1050, dist: 1.5, time: 6 },
-                    { name: "Sleeping Indian", zone: "Casper / Mid-Mountain", difficulty: "Intermediate", vert: 950, dist: 1.4, time: 5 },
-                    { name: "Ashley Ridge", zone: "Casper / Mid-Mountain", difficulty: "Intermediate", vert: 1100, dist: 1.6, time: 6 },
+function addItem(type, id) {
+  const resortData = RESORTS_DATABASE[currentResort];
+  const itemData = resortData[type].find(x => x.id === id);
+  if (!itemData) return;
+  
+  sequence.push({ uid: nextId++, type, id, data: itemData });
+  renderSequence();
+  updateStats();
+}
 
-                    // Apres Vous
-                    { name: "Apres Vous Gully", zone: "Apres Vous", difficulty: "Intermediate", vert: 1500, dist: 2.0, time: 8 },
-                    { name: "Moran", zone: "Apres Vous", difficulty: "Intermediate", vert: 1600, dist: 2.2, time: 8 },
-                    { name: "Upper Gros Ventre", zone: "Apres Vous", difficulty: "Intermediate", vert: 1400, dist: 1.9, time: 7 },
-                    { name: "Lower Gros Ventre", zone: "Apres Vous", difficulty: "Intermediate", vert: 1200, dist: 1.8, time: 7 },
-                    { name: "Saratoga Bowl", zone: "Apres Vous", difficulty: "Advanced", vert: 1300, dist: 1.5, time: 6 },
-                    { name: "St. John's", zone: "Apres Vous", difficulty: "Intermediate", vert: 1100, dist: 1.7, time: 6 },
-                    { name: "Teewinot Face", zone: "Apres Vous", difficulty: "Intermediate", vert: 900, dist: 1.3, time: 5 },
+function removeItem(uid) {
+  sequence = sequence.filter(s => s.uid !== uid);
+  renderSequence();
+  updateStats();
+}
 
-                    // Lower Mountain / Teewinot
-                    { name: "Teewinot Trail", zone: "Lower Mountain", difficulty: "Beginner", vert: 400, dist: 1.2, time: 5 },
-                    { name: "Eagle's Rest Run", zone: "Lower Mountain", difficulty: "Beginner", vert: 250, dist: 0.8, time: 3 },
-                    { name: "Pooh Bear", zone: "Lower Mountain", difficulty: "Beginner", vert: 150, dist: 0.5, time: 2 },
-                    { name: "Antelope Flats", zone: "Lower Mountain", difficulty: "Beginner", vert: 350, dist: 1.0, time: 4 },
-                    { name: "Union Pass Traverse", zone: "Lower Mountain", difficulty: "Beginner", vert: 200, dist: 1.5, time: 6 },
-                    { name: "South Hoback", zone: "Lower Mountain", difficulty: "Advanced", vert: 2200, dist: 2.5, time: 10 }
-                ]
-            },
-            "mt_bachelor": {
-                name: "Mount Bachelor, OR",
-                runs: [
-                    // Summit Cone
-                    { name: "Beverly Hills", zone: "Summit Cone", difficulty: "Intermediate", vert: 1700, dist: 2.5, time: 9 },
-                    { name: "Healy Heights", zone: "Summit Cone", difficulty: "Intermediate", vert: 1700, dist: 2.4, time: 9 },
-                    { name: "Cirque Bowl", zone: "Summit Cone", difficulty: "Expert", vert: 1500, dist: 1.8, time: 8 },
-                    { name: "Cow's Face", zone: "Summit Cone", difficulty: "Expert", vert: 1600, dist: 1.5, time: 7 },
-                    { name: "Summit Main", zone: "Summit Cone", difficulty: "Advanced", vert: 1700, dist: 2.0, time: 8 },
-                    { name: "Pinnacle", zone: "Summit Cone", difficulty: "Expert", vert: 1400, dist: 1.1, time: 5 },
+function clearAll() {
+  sequence = [];
+  renderSequence();
+  updateStats();
+}
 
-                    // Pine Marten / Front Side
-                    { name: "Thunderbird", zone: "Pine Marten / Front Side", difficulty: "Intermediate", vert: 1300, dist: 1.8, time: 7 },
-                    { name: "Leeway", zone: "Pine Marten / Front Side", difficulty: "Intermediate", vert: 1200, dist: 1.9, time: 7 },
-                    { name: "Skyliner", zone: "Pine Marten / Front Side", difficulty: "Intermediate", vert: 1100, dist: 1.6, time: 6 },
-                    { name: "Canyon", zone: "Pine Marten / Front Side", difficulty: "Advanced", vert: 1250, dist: 1.4, time: 5 },
-                    { name: "Downhill", zone: "Pine Marten / Front Side", difficulty: "Advanced", vert: 1350, dist: 1.5, time: 6 },
-                    { name: "Flying Dutchman", zone: "Pine Marten / Front Side", difficulty: "Intermediate", vert: 1000, dist: 1.5, time: 5 },
-                    { name: "Ed's Garden", zone: "Pine Marten / Front Side", difficulty: "Intermediate", vert: 900, dist: 1.3, time: 5 },
+function renderSequence() {
+  const el = document.getElementById('sequence-list');
+  if (sequence.length === 0) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🏔️</div>
+        <p>Add components sequentially from the left panel<br>to map your tracking logs chronologically.</p>
+      </div>`;
+    return;
+  }
 
-                    // Outback Territory
-                    { name: "Boomerang", zone: "Outback Territory", difficulty: "Advanced", vert: 1600, dist: 2.0, time: 8 },
-                    { name: "Outback", zone: "Outback Territory", difficulty: "Intermediate", vert: 1500, dist: 2.2, time: 8 },
-                    { name: "The Grotto", zone: "Outback Territory", difficulty: "Advanced", vert: 1400, dist: 1.5, time: 6 },
-                    { name: "Down Under", zone: "Outback Territory", difficulty: "Advanced", vert: 1300, dist: 1.4, time: 6 },
-                    { name: "Kangaroo", zone: "Outback Territory", difficulty: "Intermediate", vert: 1200, dist: 1.8, time: 7 },
-                    { name: "Wall Street", zone: "Outback Territory", difficulty: "Advanced", vert: 1100, dist: 1.3, time: 5 },
+  el.innerHTML = sequence.map((item, i) => {
+    const d = item.data;
+    let badgeStyle = '';
+    let badgeLabel = '';
+    
+    if (item.type === 'lifts') {
+      badgeStyle = 'background:var(--tag-lift);color:var(--ice);border:1px solid #2a5080;';
+      badgeLabel = 'Lift';
+    } else if (item.type === 'traverses') {
+      badgeStyle = 'background:var(--tag-traverse);color:#c4a0e8;border:1px solid #3a2a5a;';
+      badgeLabel = 'Traverse';
+    } else {
+      const dc = DIFF_COLORS[d.diff] || DIFF_COLORS.intermediate;
+      badgeStyle = `background:${dc.bg};color:${dc.text};border:1px solid ${dc.border};`;
+      badgeLabel = d.diff;
+    }
 
-                    // Northwest Territory
-                    { name: "Lone Pine", zone: "Northwest Territory", difficulty: "Advanced", vert: 2365, dist: 4.0, time: 15 },
-                    { name: "Wanoga Way", zone: "Northwest Territory", difficulty: "Intermediate", vert: 1800, dist: 2.8, time: 10 },
-                    { name: "Northwest Passage", zone: "Northwest Territory", difficulty: "Intermediate", vert: 2000, dist: 3.0, time: 11 },
-                    { name: "Conifer", zone: "Northwest Territory", difficulty: "Advanced", vert: 1900, dist: 2.2, time: 8 },
-                    { name: "Osprey", zone: "Northwest Territory", difficulty: "Advanced", vert: 1750, dist: 1.9, time: 7 },
-                    { name: "Timberline", zone: "Northwest Territory", difficulty: "Intermediate", vert: 1500, dist: 2.4, time: 9 },
+    const metaParts = [`${d.time} min`];
+    if (d.vert) metaParts.push(`${d.vert.toLocaleString()} ft`);
+    if (d.dist) metaParts.push(`${d.dist} mi`);
 
-                    // Sunrise / Cloudchaser
-                    { name: "Home Run", zone: "Sunrise / Cloudchaser", difficulty: "Beginner", vert: 600, dist: 1.6, time: 7 },
-                    { name: "Marshmallow", zone: "Sunrise / Cloudchaser", difficulty: "Beginner", vert: 450, dist: 1.2, time: 5 },
-                    { name: "Sunrise Run", zone: "Sunrise / Cloudchaser", difficulty: "Intermediate", vert: 900, dist: 1.5, time: 6 },
-                    { name: "Cloudchaser", zone: "Sunrise / Cloudchaser", difficulty: "Intermediate", vert: 1448, dist: 2.5, time: 9 },
-                    { name: "Cinder Cone", zone: "Sunrise / Cloudchaser", difficulty: "Advanced", vert: 800, dist: 1.0, time: 4 },
-                    { name: "Getback", zone: "Sunrise / Cloudchaser", difficulty: "Beginner", vert: 300, dist: 1.1, time: 5 }
-                ]
+    return `
+      <div class="seq-item">
+        <span class="seq-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="seq-type-badge" style="${badgeStyle}">${badgeLabel}</span>
+        <span class="seq-name">${d.name}</span>
+        <div class="seq-meta">${metaParts.map(m => `<span>${m}</span>`).join('')}</div>
+        <button class="remove-btn" onclick="removeItem(${item.uid})" title="Remove">×</button>
+      </div>`;
+  }).join('');
+}
+
+function initPieChart() {
+  const ctx = document.getElementById('timePieChart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Skiing Time', 'Transit / Lifts / Traverses'],
+      datasets: [{
+        data: [0, 100],
+        backgroundColor: ['#7ec89a', '#2d4d6a'],
+        borderColor: '#162236',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#8fafc4',
+            font: { size: 11, family: 'Inter' },
+            boxWidth: 12
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return ` ${context.label}: ${context.raw} min`;
             }
-        };
-
-        // Application State State Management
-        let currentResortKey = "alta";
-        let activeZoneFilter = "ALL";
-        let selectedRunIndices = new Set();
-        let globalChartInstance = null;
-
-        // UI DOM Elements
-        const resortSelect = document.getElementById("resortSelect");
-        const runsTableBody = document.getElementById("runsTableBody");
-        const zoneFiltersContainer = document.getElementById("zoneFiltersContainer");
-        const btnSelectAll = document.getElementById("btnSelectAll");
-        const btnClearAll = document.getElementById("btnClearAll");
-
-        // Metrics DOM Elements
-        const statTotalRuns = document.getElementById("statTotalRuns");
-        const statTotalVert = document.getElementById("statTotalVert");
-        const statTotalDist = document.getElementById("statTotalDist");
-        const statTotalTime = document.getElementById("statTotalTime");
-
-        // Initialization Step
-        window.addEventListener("DOMContentLoaded", () => {
-            populateResortDropdown();
-            loadResort(currentResortKey);
-            
-            resortSelect.addEventListener("change", (e) => {
-                loadResort(e.target.value);
-            });
-
-            btnSelectAll.addEventListener("click", selectAllVisible);
-            btnClearAll.addEventListener("click", deselectAllVisible);
-        });
-
-        function populateResortDropdown() {
-            resortSelect.innerHTML = "";
-            Object.keys(resortDatabase).forEach(key => {
-                const opt = document.createElement("option");
-                opt.value = key;
-                opt.textContent = resortDatabase[key].name;
-                resortSelect.appendChild(opt);
-            });
+          }
         }
+      },
+      cutout: '65%'
+    }
+  });
+}
 
-        function loadResort(key) {
-            currentResortKey = key;
-            activeZoneFilter = "ALL";
-            selectedRunIndices.clear();
-            
-            // Auto-select all runs on mountain switch initialization
-            const resort = resortDatabase[currentResortKey];
-            resort.runs.forEach((_, index) => selectedRunIndices.add(index));
+function updateStats() {
+  let totalTime = 0, skiingTime = 0, nonSkiingTime = 0;
+  let totalVert = 0, totalDist = 0;
 
-            renderZoneFilters();
-            renderTable();
-            calculateMetrics();
-            updateChart();
-        }
+  for (const item of sequence) {
+    const d = item.data;
+    totalTime += d.time;
+    
+    if (item.type === 'runs') {
+      skiingTime += d.time;
+      totalVert += d.vert || 0;
+      totalDist += d.dist || 0;
+    } else {
+      nonSkiingTime += d.time;
+    }
+  }
 
-        function renderZoneFilters() {
-            zoneFiltersContainer.innerHTML = "";
-            const resort = resortDatabase[currentResortKey];
-            
-            // Extract distinct zones present in data
-            const zones = ["ALL", ...new Set(resort.runs.map(r => r.zone))];
-            
-            zones.forEach(zone => {
-                const btn = document.createElement("button");
-                btn.textContent = zone;
-                btn.className = `px-3 py-1.5 rounded-xl text-xs font-bold tracking-tight cursor-pointer border transition ${
-                    activeZoneFilter === zone 
-                    ? "bg-slate-900 text-white border-slate-900" 
-                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                }`;
-                
-                btn.addEventListener("click", () => {
-                    activeZoneFilter = zone;
-                    renderZoneFilters();
-                    renderTable();
-                });
-                
-                zoneFiltersContainer.appendChild(btn);
-            });
-        }
+  document.getElementById('total-time').textContent = formatTime(totalTime);
+  document.getElementById('skiing-time').textContent = formatTime(skiingTime);
+  document.getElementById('total-vert').textContent = totalVert.toLocaleString();
+  document.getElementById('total-dist').textContent = totalDist.toFixed(1);
 
-        function renderTable() {
-            runsTableBody.innerHTML = "";
-            const resort = resortDatabase[currentResortKey];
+  // Sync state cleanly with structural UI variables
+  if (chartInstance) {
+    if (totalTime === 0) {
+      chartInstance.data.datasets[0].data = [0, 100];
+    } else {
+      chartInstance.data.datasets[0].data = [Math.round(skiingTime), Math.round(nonSkiingTime)];
+    }
+    chartInstance.update();
+  }
+}
 
-            resort.runs.forEach((run, index) => {
-                // Apply Filter Rules
-                if (activeZoneFilter !== "ALL" && run.zone !== activeZoneFilter) return;
-
-                const isChecked = selectedRunIndices.has(index);
-                const tr = document.createElement("tr");
-                tr.className = `hover:bg-slate-50/80 transition cursor-pointer ${isChecked ? 'bg-blue-50/30' : ''}`;
-                
-                // Color mapping for difficulty metrics
-                let diffBadgeColor = "bg-slate-100 text-slate-700";
-                if (run.difficulty === "Beginner") diffBadgeColor = "bg-emerald-100 text-emerald-800";
-                else if (run.difficulty === "Intermediate") diffBadgeColor = "bg-blue-100 text-blue-800";
-                else if (run.difficulty === "Advanced") diffBadgeColor = "bg-slate-800 text-white";
-                else if (run.difficulty === "Expert") diffBadgeColor = "bg-red-100 text-red-900 border border-red-200";
-
-                tr.innerHTML = `
-                    <td class="py-3.5 px-4 text-center">
-                        <input type="checkbox" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer" ${isChecked ? "checked" : ""}>
-                    </td>
-                    <td class="py-3.5 px-4 font-bold text-slate-900">${run.name}</td>
-                    <td class="py-3.5 px-4 text-slate-500 text-xs">${run.zone}</td>
-                    <td class="py-3.5 px-4">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${diffBadgeColor}">${run.difficulty}</span>
-                    </td>
-                    <td class="py-3.5 px-4 text-right font-semibold tabular-nums">${run.vert.toLocaleString()}</td>
-                    <td class="py-3.5 px-4 text-right font-semibold tabular-nums text-slate-600">${run.dist.toFixed(1)}</td>
-                    <td class="py-3.5 px-4 text-right font-semibold tabular-nums text-slate-600">${run.time} min</td>
-                `;
-
-                // Handle row checking changes toggled by user click interaction
-                const checkbox = tr.querySelector('input[type="checkbox"]');
-                const toggleAction = (e) => {
-                    if (e.target !== checkbox) {
-                        checkbox.checked = !checkbox.checked;
-                    }
-                    if (checkbox.checked) {
-                        selectedRunIndices.add(index);
-                        tr.classList.add('bg-blue-50/30');
-                    } else {
-                        selectedRunIndices.delete(index);
-                        tr.classList.remove('bg-blue-50/30');
-                    }
-                    calculateMetrics();
-                };
-
-                tr.addEventListener("click", toggleAction);
-                runsTableBody.appendChild(tr);
-            });
-        }
-
-        function calculateMetrics() {
-            const resort = resortDatabase[currentResortKey];
-            let totalVert = 0;
-            let totalDist = 0;
-            let totalTime = 0;
-            let count = 0;
-
-            selectedRunIndices.forEach(index => {
-                const run = resort.runs[index];
-                totalVert += run.vert;
-                totalDist += run.dist;
-                totalTime += run.time;
-                count++;
-            });
-
-            statTotalRuns.textContent = count;
-            statTotalVert.innerHTML = `${totalVert.toLocaleString()}<span class="text-sm font-medium text-slate-500 ml-1">ft</span>`;
-            statTotalDist.innerHTML = `${totalDist.toFixed(1)}<span class="text-sm font-medium text-slate-500 ml-1">mi</span>`;
-            statTotalTime.innerHTML = `${totalTime}<span class="text-sm font-medium text-slate-500 ml-1">min</span>`;
-        }
-
-        function selectAllVisible() {
-            const resort = resortDatabase[currentResortKey];
-            resort.runs.forEach((run, index) => {
-                if (activeZoneFilter === "ALL" || run.zone === activeZoneFilter) {
-                    selectedRunIndices.add(index);
-                }
-            });
-            renderTable();
-            calculateMetrics();
-        }
-
-        function deselectAllVisible() {
-            const resort = resortDatabase[currentResortKey];
-            resort.runs.forEach((run, index) => {
-                if (activeZoneFilter === "ALL" || run.zone === activeZoneFilter) {
-                    selectedRunIndices.delete(index);
-                }
-            });
-            renderTable();
-            calculateMetrics();
-        }
-
-        function updateChart() {
-            const resort = resortDatabase[currentResortKey];
-            
-            // Calculate distribution configuration allocations
-            const counts = { Beginner: 0, Intermediate: 0, Advanced: 0, Expert: 0 };
-            resort.runs.forEach(run => {
-                if (counts[run.difficulty] !== undefined) {
-                    counts[run.difficulty]++;
-                }
-            });
-
-            const chartData = [counts.Beginner, counts.Intermediate, counts.Advanced, counts.Expert];
-
-            if (globalChartInstance) {
-                globalChartInstance.destroy();
-            }
-
-            const ctx = document.getElementById('difficultyChart').getContext('2d');
-            globalChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Green/Beginner', 'Blue/Intermediate', 'Black/Advanced', 'Double Black/Expert'],
-                    datasets: [{
-                        data: chartData,
-                        backgroundColor: ['#10b981', '#3b82f6', '#1e293b', '#ef4444'],
-                        borderWidth: 2,
-                        borderColor: '#ffffff hover'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 12,
-                                font: { size: 11, weight: 'bold' },
-                                color: '#475569'
-                            }
-                        }
-                    },
-                    cutout: '70%'
-                }
-            });
-        }
-    </script>
+// Global runtime execution seeds
+window.addEventListener('DOMContentLoaded', () => {
+  renderSidebar();
+  renderSequence();
+  initPieChart();
+  updateStats();
+});
+</script>
 </body>
 </html>
