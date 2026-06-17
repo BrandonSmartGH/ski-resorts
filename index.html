@@ -198,4 +198,776 @@
     justify-content: center;
     font-size: 15px;
     color: var(--ice-dim);
-    flex-shrink: 0
+    flex-shrink: 0;
+    margin-left: 8px;
+    line-height: 1;
+  }
+
+  .component-btn:hover .add-icon {
+    background: var(--ice-dim);
+    color: var(--navy);
+    border-color: var(--ice-dim);
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    padding: 24px 28px;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--navy-card);
+    border: 1px solid var(--navy-border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .stat-card .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .stat-card .stat-value {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .stat-card .stat-unit {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+  }
+
+  .stat-total .stat-value { color: var(--ice-bright); }
+  .stat-skiing .stat-value { color: var(--green); }
+  .stat-vert .stat-value { color: var(--gold); }
+  .stat-dist .stat-value { color: var(--ice-dim); }
+
+  .dashboard-mid {
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .visualization-card {
+    background: var(--navy-card);
+    border: 1px solid var(--navy-border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chart-wrapper {
+    position: relative;
+    width: 170px;
+    height: 170px;
+    margin-bottom: 16px;
+  }
+
+  .sequence-area {
+    flex: 1;
+  }
+
+  .sequence-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .clear-btn {
+    background: transparent;
+    border: 1px solid var(--navy-border);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .clear-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .sequence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-height: 120px;
+  }
+
+  .seq-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .seq-num {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    min-width: 20px;
+  }
+
+  .seq-type-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .seq-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .seq-meta {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 10px;
+  }
+
+  .remove-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .remove-btn:hover { color: var(--red); background: rgba(232,106,90,0.12); }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-muted);
+    border: 1px dashed var(--navy-border);
+    border-radius: 12px;
+  }
+
+  .empty-state .empty-icon { font-size: 32px; margin-bottom: 10px; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--navy); }
+  ::-webkit-scrollbar-thumb { background: var(--navy-border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ice-dim); }
+
+  @media (max-width: 950px) {
+    .layout { grid-template-columns: 1fr; height: auto; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-mid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>⛷️ Epic Ski Day Calculator</h1>
+    <div class="subtitle">Build your sequence · Track your day</div>
+  </div>
+  <div class="resort-selector">
+    <select id="resort-picker" onchange="switchResort(this.value)">
+      <option value="alta">Alta Ski Area</option>
+      <option value="snowbird">Snowbird</option>
+      <option value="snowbasin">Snowbasin</option>
+      <option value="jackson">Jackson Hole</option>
+      <option value="bachelor">Mt. Bachelor</option>
+    </select>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="section-label">Components</div>
+
+    <div class="component-group">
+      <div class="component-group-header">
+        <span class="type-pill type-lift">🚡 Lifts</span>
+      </div>
+      <div class="component-list" id="lift-list"></div>
+    </div>
+
+    <div class="component-group">
+      <div class="component-group-header">
+        <span class="type-pill type-traverse">↔ Traverses</span>
+      </div>
+      <div class="component-list" id="traverse-list"></div>
+    </div>
+
+    <div class="component-group">
+      <div class="component-group-header">
+        <span class="type-pill type-run">▼ Ski Runs</span>
+      </div>
+      <div class="component-list" id="run-list"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats-row">
+      <div class="stat-card stat-total">
+        <div class="stat-label">Total Time</div>
+        <div class="stat-value" id="total-time">0</div>
+        <div class="stat-unit">minutes</div>
+      </div>
+      <div class="stat-card stat-skiing">
+        <div class="stat-label">Skiing Time</div>
+        <div class="stat-value" id="skiing-time">0</div>
+        <div class="stat-unit">minutes active descent</div>
+      </div>
+      <div class="stat-card stat-vert">
+        <div class="stat-label">Vertical Feet</div>
+        <div class="stat-value" id="total-vert">0</div>
+        <div class="stat-unit">ft descended</div>
+      </div>
+      <div class="stat-card stat-dist">
+        <div class="stat-label">Distance</div>
+        <div class="stat-value" id="total-dist">0.0</div>
+        <div class="stat-unit">miles profile</div>
+      </div>
+    </div>
+
+    <div class="dashboard-mid">
+      <div class="visualization-card">
+        <div class="section-label" style="align-self: flex-start; margin-bottom: 16px;">Active Day Breakdown</div>
+        <div class="chart-wrapper">
+          <canvas id="timePieChart"></canvas>
+        </div>
+      </div>
+
+      <div class="sequence-area">
+        <div class="sequence-label-row">
+          <div class="section-label" style="margin-bottom:0">Your run sequence</div>
+          <button class="clear-btn" onclick="clearAll()">Clear all</button>
+        </div>
+        <div class="sequence-list" id="sequence-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const RESORTS_DATABASE = {
+  alta: {
+    lifts: [
+      { id: 'collins', name: 'Collins Lift', time: 8, vert: 0, dist: 0 },
+      { id: 'supreme', name: 'Supreme Lift', time: 5.5, vert: 0, dist: 0 },
+      { id: 'sugarloaf', name: 'Sugarloaf Lift', time: 6, vert: 0, dist: 0 },
+      { id: 'wildcat', name: 'Wildcat Lift', time: 7.5, vert: 0, dist: 0 },
+      { id: 'sunnyside', name: 'Sunnyside Lift', time: 5, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'hightraverse', name: 'High Traverse Line', time: 3.5, vert: 0, dist: 0.3 },
+      { id: 'saddle', name: 'Saddle Traverse Cut', time: 2, vert: 0, dist: 0.25 },
+      { id: 'baldyhike', name: 'Baldy Peak Hike (Bootpack)', time: 25, vert: 538, dist: 0.4 }
+    ],
+    runs: [
+      { id: 'greeley', name: 'Greeley', time: 1.5, vert: 600, dist: 0.5, diff: 'expert', zone: 'Collins / Wildcat' },
+      { id: 'gunsight', name: 'Gunsight', time: 1.8, vert: 800, dist: 0.55, diff: 'expert', zone: 'Collins / Wildcat' },
+      { id: 'collinsface', name: 'Collins Face', time: 1.2, vert: 500, dist: 0.35, diff: 'advanced', zone: 'Collins / Wildcat' },
+      { id: 'rustler', name: "Alf's High Rustler", time: 2.2, vert: 1050, dist: 0.7, diff: 'expert', zone: 'Collins / Wildcat' },
+      { id: 'mambo', name: 'Mambo', time: 1.8, vert: 800, dist: 0.6, diff: 'intermediate', zone: 'Collins / Wildcat' },
+      { id: 'ballroom', name: 'Ballroom Bowl', time: 2.0, vert: 900, dist: 0.7, diff: 'intermediate', zone: 'Collins / Wildcat' },
+      { id: 'wildcatface', name: 'Wildcat Face', time: 1.3, vert: 600, dist: 0.4, diff: 'advanced', zone: 'Collins / Wildcat' },
+      { id: 'punchbowl', name: 'Punch Bowl', time: 1.4, vert: 550, dist: 0.45, diff: 'advanced', zone: 'Collins / Wildcat' },
+      { id: 'rockerfeller', name: 'Rockerfeller', time: 1.7, vert: 650, dist: 0.6, diff: 'intermediate', zone: 'Collins / Wildcat' },
+      { id: 'warmsprings', name: 'Warm Springs', time: 1.5, vert: 700, dist: 0.5, diff: 'intermediate', zone: 'Collins / Wildcat' },
+      { id: 'sunspot', name: 'Sunspot', time: 1.9, vert: 900, dist: 0.65, diff: 'advanced', zone: 'Collins / Wildcat' },
+      { id: 'mainstreet', name: 'Main Street', time: 1.6, vert: 700, dist: 0.55, diff: 'intermediate', zone: 'Collins / Wildcat' },
+      
+      { id: 'so_long', name: 'So Long', time: 2.4, vert: 1000, dist: 0.8, diff: 'advanced', zone: 'Supreme / Sugarloaf' },
+      { id: 'devils', name: "Devil's Castle Bowl", time: 2.6, vert: 1100, dist: 0.85, diff: 'advanced', zone: 'Supreme / Sugarloaf' },
+      { id: 'rollercoaster', name: 'Rollercoaster', time: 1.7, vert: 700, dist: 0.55, diff: 'intermediate', zone: 'Supreme / Sugarloaf' },
+      { id: 'extrovert', name: 'Extrovert', time: 1.5, vert: 650, dist: 0.5, diff: 'advanced', zone: 'Supreme / Sugarloaf' },
+      { id: 'razorback', name: 'Razor Back', time: 1.4, vert: 600, dist: 0.45, diff: 'expert', zone: 'Supreme / Sugarloaf' },
+      { id: 'supremebowl', name: 'Supreme Bowl Line', time: 1.8, vert: 800, dist: 0.6, diff: 'expert', zone: 'Supreme / Sugarloaf' },
+      { id: 'catherines', name: "Catherine's Area", time: 2.2, vert: 900, dist: 0.75, diff: 'advanced', zone: 'Supreme / Sugarloaf' },
+      { id: 'challenger', name: 'Challenger', time: 1.6, vert: 700, dist: 0.5, diff: 'intermediate', zone: 'Supreme / Sugarloaf' },
+      { id: 'bigdipper', name: 'Big Dipper', time: 1.5, vert: 600, dist: 0.55, diff: 'intermediate', zone: 'Supreme / Sugarloaf' },
+      { id: 'rocknroll', name: "Rock 'N Roll", time: 1.9, vert: 750, dist: 0.6, diff: 'intermediate', zone: 'Supreme / Sugarloaf' },
+      
+      { id: 'crooked', name: 'Crooked Mile', time: 2.2, vert: 400, dist: 0.7, diff: 'beginner', zone: 'Albion / Sunnyside' },
+      { id: 'homerun', name: 'Home Run', time: 3.2, vert: 800, dist: 1.3, diff: 'beginner', zone: 'Albion / Sunnyside' },
+      { id: 'patsey', name: 'Patsey Marley', time: 1.8, vert: 380, dist: 0.65, diff: 'beginner', zone: 'Albion / Sunnyside' },
+      { id: 'sunnyside_run', name: 'Sunnyside Run', time: 2.0, vert: 450, dist: 0.8, diff: 'beginner', zone: 'Albion / Sunnyside' },
+      { id: 'sweetneasy', name: "Sweet 'N Easy", time: 2.4, vert: 500, dist: 0.9, diff: 'beginner', zone: 'Albion / Sunnyside' },
+      { id: 'meadow', name: 'The Meadow', time: 1.5, vert: 300, dist: 0.5, diff: 'beginner', zone: 'Albion / Sunnyside' },
+      
+      { id: 'baldy_chutes', name: 'Baldy Chutes', time: 1.6, vert: 700, dist: 0.5, diff: 'expert', zone: 'High Peak / Baldy Zone' },
+      { id: 'perlas', name: "Perla's", time: 1.5, vert: 650, dist: 0.45, diff: 'expert', zone: 'High Peak / Baldy Zone' },
+      { id: 'keyhole', name: 'Keyhole Drop', time: 1.4, vert: 600, dist: 0.4, diff: 'expert', zone: 'High Peak / Baldy Zone' },
+      { id: 'eastcastle', name: 'East Castle Ridge', time: 2.5, vert: 1100, dist: 0.9, diff: 'expert', zone: 'High Peak / Baldy Zone' },
+      { id: 'forbidden', name: 'Forbidden Zone', time: 1.3, vert: 550, dist: 0.35, diff: 'expert', zone: 'High Peak / Baldy Zone' }
+    ]
+  },
+  snowbird: {
+    lifts: [
+      { id: 'tram', name: 'Aerial Tram', time: 7, vert: 0, dist: 0 },
+      { id: 'peru', name: 'Peru Express', time: 4.5, vert: 0, dist: 0 },
+      { id: 'gadzoom', name: 'Gadzoom Quad', time: 5.5, vert: 0, dist: 0 },
+      { id: 'mineral', name: 'Mineral Basin Express', time: 6, vert: 0, dist: 0 },
+      { id: 'littlecloud', name: 'Little Cloud Chair', time: 4.8, vert: 0, dist: 0 },
+      { id: 'gad2', name: 'Gad 2 High Speed', time: 5, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'regulator_trav', name: 'Regulator Traverse Line', time: 1.5, vert: 0, dist: 0.2 },
+      { id: 'cirque_trav', name: 'Cirque Traverse Cat-Track', time: 2.5, vert: 0, dist: 0.6 },
+      { id: 'bass_hwy', name: 'Bass Highway Flats', time: 2.0, vert: 0, dist: 0.4 }
+    ],
+    runs: [
+      { id: 'regulator', name: 'Regulator Johnson', time: 1.8, vert: 1300, dist: 0.9, diff: 'advanced', zone: 'Little Cloud Sector' },
+      { id: 'roadprovo', name: 'Road to Provo', time: 2.2, vert: 600, dist: 1.2, diff: 'intermediate', zone: 'Little Cloud Sector' },
+      { id: 'markmalu', name: 'Mark Malu', time: 1.5, vert: 800, dist: 0.5, diff: 'expert', zone: 'Little Cloud Sector' },
+      { id: 'knucklehead', name: 'Knucklehead', time: 1.4, vert: 750, dist: 0.45, diff: 'advanced', zone: 'Little Cloud Sector' },
+      
+      { id: 'silver', name: 'Silver Fox', time: 2.5, vert: 1200, dist: 0.8, diff: 'expert', zone: 'Peruvian Gulch' },
+      { id: 'primrose', name: 'Primrose Path', time: 2.2, vert: 1400, dist: 1.0, diff: 'advanced', zone: 'Peruvian Gulch' },
+      { id: 'peruvianface', name: 'Peruvian Face', time: 1.5, vert: 800, dist: 0.45, diff: 'expert', zone: 'Peruvian Gulch' },
+      { id: 'fieldsglory', name: 'Fields of Glory', time: 1.9, vert: 1100, dist: 0.7, diff: 'advanced', zone: 'Peruvian Gulch' },
+      
+      { id: 'gadzooks', name: 'Gadzooks', time: 1.8, vert: 900, dist: 0.7, diff: 'intermediate', zone: 'Gad Valley Woods' },
+      { id: 'bassackwards', name: 'Bassackwards', time: 3.2, vert: 1100, dist: 1.4, diff: 'beginner', zone: 'Gad Valley Woods' },
+      { id: 'daltons', name: "Dalton's Draw", time: 1.9, vert: 1000, dist: 0.65, diff: 'advanced', zone: 'Gad Valley Woods' },
+      { id: 'election', name: 'Election', time: 2.1, vert: 1100, dist: 0.75, diff: 'advanced', zone: 'Gad Valley Woods' },
+      { id: 'bigemma', name: 'Big Emma', time: 2.4, vert: 800, dist: 1.1, diff: 'beginner', zone: 'Gad Valley Woods' },
+      { id: 'tigertail', name: 'Tiger Tail', time: 1.8, vert: 900, dist: 0.6, diff: 'expert', zone: 'Gad Valley Woods' },
+      { id: 'gadchutes', name: 'Gad Chutes', time: 1.4, vert: 700, dist: 0.4, diff: 'expert', zone: 'Gad Valley Woods' },
+      { id: 'barrysteep', name: 'Barry Barry Steep', time: 1.3, vert: 650, dist: 0.35, diff: 'expert', zone: 'Gad Valley Woods' },
+      { id: 'bananas', name: 'Bananas', time: 2.3, vert: 1000, dist: 0.9, diff: 'intermediate', zone: 'Gad Valley Woods' },
+      
+      { id: 'bookends', name: 'Bookends Bowl', time: 2.0, vert: 1200, dist: 0.85, diff: 'expert', zone: 'Mineral Basin Face' },
+      { id: 'lupine', name: 'Lupine Loop', time: 3.5, vert: 1400, dist: 1.6, diff: 'intermediate', zone: 'Mineral Basin Face' },
+      { id: 'pathparadise', name: 'Path to Paradise', time: 1.6, vert: 400, dist: 0.8, diff: 'advanced', zone: 'Mineral Basin Face' },
+      { id: 'baldyexp', name: 'Baldy Express Run', time: 1.7, vert: 800, dist: 0.65, diff: 'intermediate', zone: 'Mineral Basin Face' },
+      { id: 'shireen', name: 'Shireen', time: 2.0, vert: 1100, dist: 0.75, diff: 'advanced', zone: 'Mineral Basin Face' },
+      { id: 'whiteroom', name: 'White Room', time: 1.8, vert: 1000, dist: 0.7, diff: 'expert', zone: 'Mineral Basin Face' },
+      { id: 'charlys', name: "Charly's Choice", time: 1.6, vert: 900, dist: 0.6, diff: 'advanced', zone: 'Mineral Basin Face' },
+      
+      { id: 'greatscott', name: 'Great Scott', time: 1.2, vert: 600, dist: 0.3, diff: 'expert', zone: 'Cirque Peaks & Ridges' },
+      { id: 'uppercirque', name: 'Upper Cirque', time: 1.7, vert: 900, dist: 0.5, diff: 'expert', zone: 'Cirque Peaks & Ridges' },
+      { id: 'organ', name: 'Organ Grinder', time: 1.7, vert: 900, dist: 0.55, diff: 'advanced', zone: 'Cirque Peaks & Ridges' },
+      { id: 'wilbere', name: 'Wilbere Chute', time: 1.1, vert: 500, dist: 0.3, diff: 'expert', zone: 'Cirque Peaks & Ridges' },
+      { id: 'harpers', name: "Harper's Ferry", time: 1.6, vert: 700, dist: 0.6, diff: 'intermediate', zone: 'Cirque Peaks & Ridges' },
+      { id: 'chips', name: "Chips Run (Mega Profile)", time: 4.5, vert: 2900, dist: 2.5, diff: 'intermediate', zone: 'Cirque Peaks & Ridges' }
+    ]
+  },
+  snowbasin: {
+    lifts: [
+      { id: 'needles', name: 'Needles Gondola', time: 7.5, vert: 0, dist: 0 },
+      { id: 'johnpaul', name: 'John Paul Express', time: 5.5, vert: 0, dist: 0 },
+      { id: 'strawberry', name: 'Strawberry Gondola', time: 9, vert: 0, dist: 0 },
+      { id: 'wildcat_exp', name: 'Wildcat Express', time: 5.2, vert: 0, dist: 0 },
+      { id: 'porcupine_lift', name: 'Porcupine Chair', time: 4.5, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'strawberry_trav', name: 'Strawberry Traverse Wall', time: 2, vert: 0, dist: 0.3 },
+      { id: 'becker_trav', name: 'Becker Traverse Link', time: 1.5, vert: 0, dist: 0.2 }
+    ],
+    runs: [
+      { id: 'grizzly', name: 'Grizzly Downhill', time: 3.5, vert: 2400, dist: 1.8, diff: 'expert', zone: 'John Paul Peak Area' },
+      { id: 'wildflower', name: 'Wildflower Downhill', time: 3.0, vert: 2200, dist: 1.6, diff: 'expert', zone: 'John Paul Peak Area' },
+      { id: 'nonameface', name: 'No Name Face', time: 2.2, vert: 1300, dist: 0.9, diff: 'expert', zone: 'John Paul Peak Area' },
+      { id: 'mtogden', name: 'Mt. Ogden Bowl', time: 2.4, vert: 1400, dist: 1.0, diff: 'advanced', zone: 'John Paul Peak Area' },
+      { id: 'ellisons', name: "Ellison's Line", time: 2.1, vert: 1200, dist: 0.8, diff: 'expert', zone: 'John Paul Peak Area' },
+      { id: 'philpot', name: 'Philpot Ridge', time: 2.0, vert: 1100, dist: 0.85, diff: 'advanced', zone: 'John Paul Peak Area' },
+      
+      { id: 'dan', name: "Dan's Run", time: 2.2, vert: 1100, dist: 0.9, diff: 'intermediate', zone: 'Needles Face Grid' },
+      { id: 'sweetwater', name: 'Sweetwater', time: 2.4, vert: 1000, dist: 1.1, diff: 'intermediate', zone: 'Needles Face Grid' },
+      { id: 'powder_puff', name: 'Powder Puff', time: 1.5, vert: 400, dist: 0.7, diff: 'beginner', zone: 'Needles Face Grid' },
+      { id: 'cityhill', name: 'City Hill', time: 1.8, vert: 900, dist: 0.75, diff: 'intermediate', zone: 'Needles Face Grid' },
+      { id: 'hollywood', name: 'Hollywood', time: 1.7, vert: 850, dist: 0.7, diff: 'intermediate', zone: 'Needles Face Grid' },
+      { id: 'needlesrun', name: 'Needles Run', time: 2.4, vert: 1200, dist: 1.2, diff: 'intermediate', zone: 'Needles Face Grid' },
+      { id: 'middlebowl', name: 'Middle Bowl', time: 1.8, vert: 900, dist: 0.8, diff: 'intermediate', zone: 'Needles Face Grid' },
+      { id: 'bluegrouse', name: 'Blue Grouse', time: 1.6, vert: 800, dist: 0.7, diff: 'intermediate', zone: 'Needles Face Grid' },
+      
+      { id: 'elkridge', name: 'Elk Ridge (Highline)', time: 4.5, vert: 2400, dist: 2.8, diff: 'intermediate', zone: 'Strawberry Valley Bowls' },
+      { id: 'sister', name: "Sister's Bowl", time: 2.5, vert: 1400, dist: 1.1, diff: 'advanced', zone: 'Strawberry Valley Bowls' },
+      { id: 'easalong', name: 'Eas-A-Long', time: 3.0, vert: 600, dist: 1.5, diff: 'beginner', zone: 'Strawberry Valley Bowls' },
+      { id: 'strawberrymain', name: 'Main Street Strawberry', time: 2.3, vert: 1300, dist: 1.2, diff: 'intermediate', zone: 'Strawberry Valley Bowls' },
+      { id: 'lastchance', name: 'Last Chance', time: 2.5, vert: 1200, dist: 1.4, diff: 'intermediate', zone: 'Strawberry Valley Bowls' },
+      { id: 'wessels', name: "Wessel's", time: 1.9, vert: 1100, dist: 0.8, diff: 'advanced', zone: 'Strawberry Valley Bowls' },
+      { id: 'lonetree', name: 'Lone Tree Chute', time: 2.0, vert: 1200, dist: 0.75, diff: 'expert', zone: 'Strawberry Valley Bowls' },
+      
+      { id: 'porcupineface', name: 'Porcupine Face', time: 1.6, vert: 900, dist: 0.6, diff: 'advanced', zone: 'Wildcat & Porcupine Zones' },
+      { id: 'bearsprings', name: 'Bear Springs', time: 1.9, vert: 1000, dist: 0.85, diff: 'intermediate', zone: 'Wildcat & Porcupine Zones' },
+      { id: 'wildcatbowl', name: 'Wildcat Bowl', time: 1.8, vert: 1100, dist: 0.75, diff: 'advanced', zone: 'Wildcat & Porcupine Zones' },
+      { id: 'gordons', name: "Gordon's Run", time: 1.7, vert: 950, dist: 0.65, diff: 'intermediate', zone: 'Wildcat & Porcupine Zones' },
+      { id: 'sunshine', name: 'Sunshine Base Trail', time: 2.5, vert: 700, dist: 1.3, diff: 'beginner', zone: 'Wildcat & Porcupine Zones' },
+      { id: 'littlecat', name: 'Littlecat Learner Pitch', time: 1.1, vert: 150, dist: 0.3, diff: 'beginner', zone: 'Wildcat & Porcupine Zones' }
+    ]
+  },
+  jackson: {
+    lifts: [
+      { id: 'tram_jh', name: 'Aerial Tram', time: 8, vert: 0, dist: 0 },
+      { id: 'sublette', name: 'Sublette Quad', time: 5, vert: 0, dist: 0 },
+      { id: 'casper', name: 'Casper High Speed', time: 4, vert: 0, dist: 0 },
+      { id: 'thunder_jh', name: 'Thunder Quad', time: 4.5, vert: 0, dist: 0 },
+      { id: 'hoback_chair', name: 'Hoback Quad Lift', time: 6.5, vert: 0, dist: 0 },
+      { id: 'bridger_gondola', name: 'Bridger Gondola', time: 7, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'casper_trav', name: 'Casper Traverse Trail', time: 1.5, vert: 0, dist: 0.3 },
+      { id: 'amp_trav', name: 'Amphitheater Traverse Line', time: 1.8, vert: 0, dist: 0.25 }
+    ],
+    runs: [
+      { id: 'corbets', name: "Corbet's Couloir", time: 1.0, vert: 700, dist: 0.4, diff: 'expert', zone: 'Rendezvous Peak' },
+      { id: 'rendezvousBowl', name: 'Rendezvous Bowl', time: 2.0, vert: 1600, dist: 1.1, diff: 'advanced', zone: 'Rendezvous Peak' },
+      { id: 'puckerface', name: 'Pucker Face', time: 1.4, vert: 900, dist: 0.45, diff: 'expert', zone: 'Rendezvous Peak' },
+      { id: 'tramline', name: 'Tramline Direct', time: 2.5, vert: 2100, dist: 1.2, diff: 'expert', zone: 'Rendezvous Peak' },
+      
+      { id: 'alta_chutes', name: 'Alta Chutes', time: 1.5, vert: 1100, dist: 0.6, diff: 'expert', zone: 'Sublette Quad Web' },
+      { id: 'laramie', name: 'Laramie Bowl', time: 1.6, vert: 1200, dist: 0.8, diff: 'advanced', zone: 'Sublette Quad Web' },
+      { id: 'subletteridge', name: 'Sublette Ridge', time: 1.9, vert: 1300, dist: 0.85, diff: 'advanced', zone: 'Sublette Quad Web' },
+      { id: 'bivouac', name: 'Bivouac', time: 2.0, vert: 1200, dist: 0.95, diff: 'advanced', zone: 'Sublette Quad Web' },
+      { id: 'cheyenne', name: 'Cheyenne Bowl', time: 1.8, vert: 1100, dist: 0.75, diff: 'advanced', zone: 'Sublette Quad Web' },
+      { id: 'birdhand', name: 'Bird in the Hand', time: 1.6, vert: 1000, dist: 0.55, diff: 'expert', zone: 'Sublette Quad Web' },
+      
+      { id: 'sundance', name: 'Sundance', time: 2.2, vert: 1400, dist: 1.5, diff: 'intermediate', zone: 'Casper & Mid-Mountain' },
+      { id: 'easy_does', name: 'Easy Does It', time: 2.5, vert: 600, dist: 1.2, diff: 'beginner', zone: 'Casper & Mid-Mountain' },
+      { id: 'paintbrush', name: 'Paint Brush', time: 1.8, vert: 1100, dist: 0.9, diff: 'intermediate', zone: 'Casper & Mid-Mountain' },
+      { id: 'sleepingindian', name: 'Sleeping Indian', time: 2.3, vert: 1400, dist: 1.3, diff: 'intermediate', zone: 'Casper & Mid-Mountain' },
+      
+      { id: 'towerthree', name: 'Tower Three Chute', time: 1.3, vert: 900, dist: 0.45, diff: 'expert', zone: 'Thunder Quad Sector' },
+      { id: 'grand_run', name: 'Grand', time: 2.1, vert: 1300, dist: 1.1, diff: 'advanced', zone: 'Thunder Quad Sector' },
+      { id: 'amphitheater', name: 'Amphitheater', time: 1.7, vert: 1000, dist: 0.8, diff: 'intermediate', zone: 'Thunder Quad Sector' },
+      { id: 'tensleep', name: 'Ten Sleep', time: 1.9, vert: 1100, dist: 1.1, diff: 'intermediate', zone: 'Thunder Quad Sector' },
+      { id: 'cirque_jh', name: 'The Cirque', time: 1.7, vert: 1000, dist: 0.7, diff: 'advanced', zone: 'Thunder Quad Sector' },
+      { id: 'expertchutes', name: 'Expert Chutes', time: 1.3, vert: 800, dist: 0.4, diff: 'expert', zone: 'Thunder Quad Sector' },
+      
+      { id: 'hobacks', name: 'The Hobacks (Powder Base)', time: 3.0, vert: 2300, dist: 1.6, diff: 'advanced', zone: 'Lower Outbound & Base' },
+      { id: 'lowersublette', name: 'Lower Sublette Ridge', time: 2.1, vert: 1400, dist: 1.1, diff: 'advanced', zone: 'Lower Outbound & Base' },
+      { id: 'unionpass', name: 'Union Pass Route', time: 2.6, vert: 700, dist: 1.6, diff: 'beginner', zone: 'Lower Outbound & Base' },
+      { id: 'eaglesrest', name: "Eagle's Rest", time: 1.4, vert: 300, dist: 0.5, diff: 'beginner', zone: 'Lower Outbound & Base' },
+      { id: 'poohbear', name: 'Pooh Bear Corridor', time: 1.2, vert: 200, dist: 0.4, diff: 'beginner', zone: 'Lower Outbound & Base' },
+      { id: 'teewinot', name: 'Teewinot Flat', time: 1.8, vert: 450, dist: 0.9, diff: 'beginner', zone: 'Lower Outbound & Base' },
+      
+      { id: 'apresvousmain', name: 'Apres Vous Main Line', time: 2.2, vert: 1500, dist: 1.4, diff: 'intermediate', zone: 'Apres Vous Peak' },
+      { id: 'saratoga', name: 'Saratoga Bowl', time: 2.0, vert: 1100, dist: 0.85, diff: 'advanced', zone: 'Apres Vous Peak' },
+      { id: 'moran', name: 'Moran', time: 1.9, vert: 1300, dist: 1.1, diff: 'intermediate', zone: 'Apres Vous Peak' },
+      { id: 'werner', name: 'Werner', time: 2.1, vert: 1400, dist: 1.3, diff: 'intermediate', zone: 'Apres Vous Peak' },
+      { id: 'crags', name: 'The Crags Area', time: 2.3, vert: 1200, dist: 0.9, diff: 'advanced', zone: 'Apres Vous Peak' },
+      { id: 'stjohns', name: 'St. Johns', time: 1.8, vert: 1100, dist: 1.0, diff: 'intermediate', zone: 'Apres Vous Peak' }
+    ]
+  },
+  bachelor: {
+    lifts: [
+      { id: 'summit', name: 'Summit Quad', time: 6, vert: 0, dist: 0 },
+      { id: 'pine_marten', name: 'Pine Marten Fast', time: 5, vert: 0, dist: 0 },
+      { id: 'outback', name: 'Outback Express', time: 5.5, vert: 0, dist: 0 },
+      { id: 'northwest_exp', name: 'Northwest Express', time: 6.2, vert: 0, dist: 0 },
+      { id: 'sunrise_exp', name: 'Sunrise Express', time: 4.8, vert: 0, dist: 0 },
+      { id: 'cloudchaser_lift', name: 'Cloudchaser Quad', time: 5.8, vert: 0, dist: 0 }
+    ],
+    traverses: [
+      { id: 'catchline', name: 'Sunrise Return Catchline', time: 2, vert: 0, dist: 0.4 },
+      { id: 'nw_trav', name: 'Northwest Traverse Cat-Track', time: 2.2, vert: 0, dist: 0.5 }
+    ],
+    runs: [
+      { id: 'cirque_bach', name: 'The Cirque', time: 2.0, vert: 1700, dist: 1.2, diff: 'expert', zone: 'Summit Volcano Cone' },
+      { id: 'cow_face', name: 'Cow Face', time: 1.8, vert: 1400, dist: 1.0, diff: 'advanced', zone: 'Summit Volcano Cone' },
+      { id: 'healey', name: 'Healey Heights', time: 2.1, vert: 1500, dist: 1.1, diff: 'expert', zone: 'Summit Volcano Cone' },
+      { id: 'summitmain', name: 'Summit Main Highway', time: 2.5, vert: 2300, dist: 1.7, diff: 'advanced', zone: 'Summit Volcano Cone' },
+      
+      { id: 'thunderbird', name: 'Thunderbird', time: 2.0, vert: 1300, dist: 1.8, diff: 'intermediate', zone: 'Front Side Tracks' },
+      { id: 'le_meadows', name: 'Le Meadows', time: 2.2, vert: 600, dist: 1.3, diff: 'beginner', zone: 'Front Side Tracks' },
+      { id: 'beverly', name: 'Beverly Hills', time: 2.3, vert: 1000, dist: 1.5, diff: 'intermediate', zone: 'Front Side Tracks' },
+      { id: 'canyon_run', name: 'Canyon', time: 1.7, vert: 900, dist: 1.1, diff: 'intermediate', zone: 'Front Side Tracks' },
+      { id: 'skyliner_run', name: 'Skyliner Line', time: 2.1, vert: 1200, dist: 1.4, diff: 'intermediate', zone: 'Front Side Tracks' },
+      { id: 'flyingdutch', name: 'Flying Dutchman', time: 1.9, vert: 1100, dist: 1.3, diff: 'intermediate', zone: 'Front Side Tracks' },
+      { id: 'kangaroo_bach', name: 'Kangaroo Pitch', time: 1.6, vert: 950, dist: 0.75, diff: 'advanced', zone: 'Front Side Tracks' },
+      { id: 'edsgarden', name: "Ed's Garden Patch", time: 1.8, vert: 600, dist: 1.0, diff: 'beginner', zone: 'Front Side Tracks' },
+      
+      { id: 'boomerang', name: 'Boomerang', time: 2.4, vert: 1600, dist: 2.0, diff: 'advanced', zone: 'Outback Basin' },
+      { id: 'downunder', name: 'Down Under', time: 1.8, vert: 1200, dist: 1.0, diff: 'intermediate', zone: 'Outback Basin' },
+      { id: 'outback_run', name: 'Outback Trail', time: 2.1, vert: 1500, dist: 1.6, diff: 'intermediate', zone: 'Outback Basin' },
+      { id: 'strawhat', name: 'Strawhat', time: 1.9, vert: 1300, dist: 1.2, diff: 'intermediate', zone: 'Outback Basin' },
+      { id: 'overback', name: 'Overback Wall', time: 2.3, vert: 1600, dist: 1.5, diff: 'advanced', zone: 'Outback Basin' },
+      
+      { id: 'westback', name: 'West Backcountry Bowls', time: 3.2, vert: 2500, dist: 2.2, diff: 'advanced', zone: 'Backcountry Glades' },
+      { id: 'eastback', name: 'East Backcountry Rims', time: 3.0, vert: 2400, dist: 2.0, diff: 'advanced', zone: 'Backcountry Glades' },
+      
+      { id: 'marshmallow', name: 'Marshmallow Flat', time: 2.4, vert: 500, dist: 1.2, diff: 'beginner', zone: 'Sunrise Area Outposts' },
+      { id: 'sunrise_run', name: 'Sunrise Descent', time: 2.0, vert: 700, dist: 1.1, diff: 'beginner', zone: 'Sunrise Area Outposts' },
+      { id: 'tempest', name: 'Tempest Roll', time: 2.2, vert: 1400, dist: 1.6, diff: 'advanced', zone: 'Sunrise Area Outposts' },
+      
+      { id: 'cloudmain', name: 'Cloudchaser Main Core', time: 2.4, vert: 1400, dist: 1.9, diff: 'intermediate', zone: 'Cloudchaser Sector' },
+      { id: 'fireback', name: 'Fireback Gulch', time: 2.1, vert: 1300, dist: 1.5, diff: 'intermediate', zone: 'Cloudchaser Sector' },
+      { id: 'osprey', name: 'Osprey', time: 2.3, vert: 1200, dist: 1.7, diff: 'intermediate', zone: 'Cloudchaser Sector' },
+      { id: 'sparkslake', name: 'Sparks Lake Glade', time: 2.5, vert: 1100, dist: 1.8, diff: 'intermediate', zone: 'Cloudchaser Sector' },
+      
+      { id: 'northwest_run', name: 'Northwest Trail Profile', time: 2.6, vert: 2100, dist: 2.1, diff: 'advanced', zone: 'Northwest Deep Rim' },
+      { id: 'ospreynw', name: 'Osprey NW Corner', time: 2.2, vert: 1800, dist: 1.6, diff: 'intermediate', zone: 'Northwest Deep Rim' },
+      { id: 'craterlake', name: 'Crater Lake Sweep', time: 2.4, vert: 1900, dist: 1.8, diff: 'intermediate', zone: 'Northwest Deep Rim' },
+      { id: 'wanoga', name: 'Wanoga Pitch', time: 2.5, vert: 1700, dist: 2.0, diff: 'intermediate', zone: 'Northwest Deep Rim' }
+    ]
+  }
+};
+
+const DIFF_COLORS = {
+  beginner: { bg: '#0a2518', text: '#7ec89a', border: '#1a4a2a' },
+  intermediate: { bg: '#1a2c10', text: '#a8d870', border: '#2a4a1a' },
+  advanced: { bg: '#1a1a10', text: '#e8c96a', border: '#3a3010' },
+  expert: { bg: '#2a1010', text: '#e87a6a', border: '#4a2010' },
+};
+
+let currentResort = 'alta';
+let sequence = [];
+let nextId = 1;
+let chartInstance = null;
+
+function formatTime(mins) {
+  if (mins < 60) return Math.round(mins * 10) / 10;
+  const h = Math.floor(mins / 60);
+  const m = Math.round(mins % 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function switchResort(resortKey) {
+  currentResort = resortKey;
+  sequence = [];
+  renderSidebar();
+  renderSequence();
+  updateStats();
+}
+
+function renderSidebar() {
+  const data = RESORTS_DATABASE[currentResort];
+  
+  document.getElementById('lift-list').innerHTML = data.lifts.map(l => `
+    <button class="component-btn" onclick="addItem('lift','${l.id}')">
+      <div>
+        <div class="name">${l.name}</div>
+        <div class="meta"><span>${l.time} min</span></div>
+      </div>
+      <div class="add-icon">+</div>
+    </button>
+  `).join('');
+
+  document.getElementById('traverse-list').innerHTML = data.traverses.map(t => `
+    <button class="component-btn" onclick="addItem('traverse','${t.id}')">
+      <div>
+        <div class="name">${t.name}</div>
+        <div class="meta">
+          <span>${t.time} min</span>
+          ${t.dist ? `<span>${t.dist} mi</span>` : ''}
+        </div>
+      </div>
+      <div class="add-icon">+</div>
+    </button>
+  `).join('');
+
+  const zonesMap = {};
+  data.runs.forEach(r => {
+    if (!zonesMap[r.zone]) zonesMap[r.zone] = [];
+    zonesMap[r.zone].push(r);
+  });
+
+  let runHtml = '';
+  for (const zone in zonesMap) {
+    runHtml += `<div class="zone-title">${zone}</div>`;
+    runHtml += zonesMap[zone].map(r => {
+      const dc = DIFF_COLORS[r.diff] || DIFF_COLORS.intermediate;
+      return `
+        <button class="component-btn" onclick="addItem('run','${r.id}')">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+              <span class="name">${r.name}</span>
+              <span style="font-size:9px;padding:2px 6px;border-radius:6px;background:${dc.bg};color:${dc.text};border:1px solid ${dc.border};text-transform:uppercase;letter-spacing:0.5px">${r.diff}</span>
+            </div>
+            <div class="meta">
+              <span>${r.time} min</span>
+              <span>${r.vert.toLocaleString()} ft</span>
+              <span>${r.dist} mi</span>
+            </div>
+          </div>
+          <div class="add-icon">+</div>
+        </button>
+      `;
+    }).join('');
+  }
+  document.getElementById('run-list').innerHTML = runHtml;
+}
+
+function getComponentData(type, id) {
+  return RESORTS_DATABASE[currentResort][type + 's'].find(x => x.id === id);
+}
+
+function addItem(type, id) {
+  const data = getComponentData(type, id);
+  if (!data) return;
+  
+  sequence.push({ uid: nextId++, type, id, data });
+  renderSequence();
+  updateStats();
+}
+
+function removeItem(uid) {
+  sequence = sequence.filter(s => s.uid !== uid);
+  renderSequence();
+  updateStats();
+}
+
+function clearAll() {
+  sequence = [];
+  renderSequence();
+  updateStats();
+}
+
+function renderSequence() {
+  const el = document.getElementById('sequence-list');
+  if (sequence.length === 0) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🏔️</div>
+        <p>Add components sequentially from the left panel<br>to map your tracking logs chronologically.</p>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = sequence.map((item, i) => {
+    const d = item.data;
+    let badgeStyle = '';
+    let badgeLabel = '';
+    
+    if (item.type === 'lift') {
+      badgeStyle = 'background:var(--tag-lift);color:var(--ice);border:1px solid #2a5080;';
+      badgeLabel = 'Lift';
+    } else if (item.type === 'traverse') {
+      badgeStyle = 'background:var(--tag-traverse);color:#c4a0e8;border:1px solid #3a2a5a;';
+      badgeLabel = 'Traverse';
+    } else {
+      const dc = DIFF_COLORS[d.diff] || DIFF_COLORS.intermediate;
+      badgeStyle = `background:${dc.bg};color:${dc.text};border:1px solid ${dc.border};`;
+      badgeLabel = d.diff;
+    }
+
+    const metaParts = [`${d.time} min`];
+    if (d.vert) metaParts.push(`${d.vert.toLocaleString()} ft`);
+    if (d.dist) metaParts.push(`${d.dist} mi`);
+
+    return `
+      <div class="seq-item">
+        <span class="seq-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="seq-type-badge" style="${badgeStyle}">${badgeLabel}</span>
+        <span class="seq-name">${d.name}</span>
+        <div class="seq-meta">${metaParts.map(m => `<span>${m}</span>`).join('')}</div>
+        <button class="remove-btn" onclick="removeItem(${item.uid})" title="Remove">×</button>
+      </div>`;
+  }).join('');
+}
+
+function initPieChart() {
+  const ctx = document.getElementById('timePieChart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Skiing Time', 'Transit (Lifts/Traverses)'],
+      datasets: [{
+        data: [0, 100],
+        backgroundColor: ['#7ec89a', '#2d4d6a'],
+        borderColor: '#162236',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#8fafc4',
+            font: { size: 11, family: 'Inter' },
+            boxWidth: 12
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return ` ${context.label}: ${context.raw} min`;
+            }
+          }
+        }
+      },
+      cutout: '65%'
+    }
+  });
+}
+
+function updateStats() {
+  let totalTime = 0, skiingTime = 0, nonSkiingTime = 0;
+  let totalVert = 0, totalDist = 0;
+
+  for (const item of sequence) {
+    const d = item.data;
+    totalTime += d.time;
+    totalVert += d.vert || 0;
+    totalDist += d.dist || 0;
+    
+    if (item.type === 'run') {
+      skiingTime += d.time;
+    } else {
+      nonSkiingTime += d.time;
+    }
+  }
+
+  document.getElementById('total-time').textContent = formatTime(totalTime);
+  document.getElementById('skiing-time').textContent = formatTime(skiingTime);
+  document.getElementById('total-vert').textContent = totalVert.toLocaleString();
+  document.getElementById('total-dist').textContent = totalDist.toFixed(1);
+
+  if (chartInstance) {
+    if (totalTime === 0) {
+      chartInstance.data.datasets[0].data = [0, 100];
+    } else {
+      chartInstance.data.datasets[0].data = [Math.round(skiingTime), Math.round(nonSkiingTime)];
+    }
+    chartInstance.update();
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  renderSidebar();
+  renderSequence();
+  initPieChart();
+  updateStats();
+});
+</script>
+</body>
+</html>
